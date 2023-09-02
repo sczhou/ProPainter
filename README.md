@@ -2,7 +2,7 @@
 
 <div class="logo">
    <a href="https://shangchenzhou.com/projects/ProPainter/">
-      <img src="assets/propainter_logo1" onmouseover="this.src='assets/propainter_logo2';" onmouseout="this.src='assets/propainter_logo1';" style="width:180px; border-radius:50%; box-shadow: 0 0 10px #f00">
+      <img src="assets/propainter_logo1_glow.png" style="width:180px;">
    </a>
 </div>
 
