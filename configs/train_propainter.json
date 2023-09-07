@@ -1,0 +1,48 @@
+{
+    "seed": 2023,
+    "save_dir": "experiments_model/",
+    "train_data_loader": {
+        "name": "youtube-vos",
+        "video_root": "your_video_root",
+        "flow_root": "your_flow_root",
+        "w": 432,
+        "h": 240,
+        "num_local_frames": 10, 
+        "num_ref_frames": 6,
+        "load_flow": 0
+    },
+    "losses": {
+        "hole_weight": 1,
+        "valid_weight": 1,
+        "flow_weight": 1,
+        "adversarial_weight": 0.01,
+        "GAN_LOSS": "hinge",
+        "perceptual_weight": 0
+    },
+    "model": {
+        "net": "propainter",
+        "no_dis": 0,
+        "load_d": 1,
+        "interp_mode": "nearest"
+    },
+    "trainer": {
+        "version": "trainer",
+        "type": "Adam",
+        "beta1": 0,
+        "beta2": 0.99,
+        "lr": 1e-4,
+        "batch_size": 8,
+        "num_workers": 8,
+        "num_prefetch_queue": 8,
+        "log_freq": 100,
+        "save_freq": 1e4,
+        "iterations": 700e3,
+        "scheduler": {
+            "type": "MultiStepLR",
+            "milestones": [
+                400e3
+            ],
+            "gamma": 0.1
+        }
+    }
+}

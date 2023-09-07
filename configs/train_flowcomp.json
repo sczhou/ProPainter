@@ -1,0 +1,40 @@
+{
+    "seed": 2023,
+    "save_dir": "experiments_model/",
+    "train_data_loader": {
+        "name": "youtube-vos",
+        "video_root": "your_video_root",
+        "flow_root": "your_flow_root",
+        "w": 432,
+        "h": 240,
+        "num_local_frames": 10,
+        "num_ref_frames": 1,
+        "load_flow": 0
+    },
+    "losses": {
+        "flow_weight": 0.25
+    },
+    "model": {
+        "net": "recurrent_flow_completion"
+    },
+    "trainer": {
+        "version": "trainer_flow_w_edge",
+        "type": "Adam",
+        "beta1": 0,
+        "beta2": 0.99,
+        "lr": 5e-5,
+        "batch_size": 8,
+        "num_workers": 4,
+        "num_prefetch_queue": 4,
+        "log_freq": 100,
+        "save_freq": 5e3,
+        "iterations": 700e3,
+        "scheduler": {
+            "type": "MultiStepLR",
+            "milestones": [
+                300e3, 400e3, 500e3, 600e3
+            ],
+            "gamma": 0.2
+        }
+    }
+}
