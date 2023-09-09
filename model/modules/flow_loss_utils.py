@@ -64,8 +64,8 @@ def length_sq(x):
 
 
 def fbConsistencyCheck(flow_fw, flow_bw, alpha1=0.01, alpha2=0.5):
-    flow_bw_warped = flow_warp(flow_bw, flow_fw)  # wb(wf(x))
-    flow_fw_warped = flow_warp(flow_fw, flow_bw)  # wf(wb(x))
+    flow_bw_warped = flow_warp(flow_bw, flow_fw.permute(0, 2, 3, 1))  # wb(wf(x))
+    flow_fw_warped = flow_warp(flow_fw, flow_bw.permute(0, 2, 3, 1))  # wf(wb(x))
     flow_diff_fw = flow_fw + flow_bw_warped  # wf + wb(wf(x))
     flow_diff_bw = flow_bw + flow_fw_warped  # wb + wf(wb(x))
 

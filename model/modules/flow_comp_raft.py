@@ -160,13 +160,13 @@ def create_mask(tensor, paddings):
     mask4d = mask3d.unsqueeze(1)
     return mask4d.detach()
 
-def ternary_loss(comp, flow, mask, current_frame, shift_frame, scale_factor=1):
+def ternary_loss(flow_comp, flow_gt, mask, current_frame, shift_frame, scale_factor=1):
     if scale_factor != 1:
         current_frame = F.interpolate(current_frame, scale_factor=1 / scale_factor, mode='bilinear')
         shift_frame = F.interpolate(shift_frame, scale_factor=1 / scale_factor, mode='bilinear')
-    warped_sc = flow_warp(shift_frame, flow)
+    warped_sc = flow_warp(shift_frame, flow_gt.permute(0, 2, 3, 1))
     noc_mask = torch.exp(-50. * torch.sum(torch.abs(current_frame - warped_sc), dim=1).pow(2)).unsqueeze(1)
-    warped_comp_sc = flow_warp(shift_frame, comp)
+    warped_comp_sc = flow_warp(shift_frame, flow_comp.permute(0, 2, 3, 1))
     loss = ternary_loss2(current_frame, warped_comp_sc, noc_mask, mask)
     return loss
 
