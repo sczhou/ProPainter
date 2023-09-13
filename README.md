@@ -100,7 +100,7 @@
 1. Clone Repo
 
    ```bash
-   git clone https://github.com/MCG-NKU/E2FGVI.git
+   git clone https://github.com/sczhou/ProPainter.git
    ```
 
 2. Create Conda Environment and Install Dependencies
