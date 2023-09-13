@@ -278,7 +278,7 @@ def get_random_shape(edge_num=9, ratio=0.7, width=432, height=240):
     angles = np.linspace(0, 2*np.pi, points_num)
     codes = np.full(points_num, Path.CURVE4)
     codes[0] = Path.MOVETO
-    # Using this instad of Path.CLOSEPOLY avoids an innecessary straight line
+    # Using this instead of Path.CLOSEPOLY avoids an innecessary straight line
     verts = np.stack((np.cos(angles), np.sin(angles))).T * \
         (2*ratio*np.random.random(points_num)+1-ratio)[:, None]
     verts[-1, :] = verts[0, :]
