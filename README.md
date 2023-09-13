@@ -38,6 +38,7 @@
 </div>
 
 ⭐ If ProPainter is helpful to your projects, please help star this repo. Thanks! 🤗
+
 :open_book: For more visual results, go checkout our <a href="https://shangchenzhou.com/projects/ProPainter/" target="_blank">project page</a>
 
 
