@@ -107,7 +107,7 @@
 2. Create Conda Environment and Install Dependencies
 
    ```bash
-   conda env create -f environment.yml
+   conda env create -f environment.yaml
    conda activate propainter
    ```
    - Python >= 3.7
