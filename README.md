@@ -141,6 +141,13 @@ python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 
 The results will be saved in the `results` folder.
 To test your own videos, please prepare the input `mp4 video` (or `split frames`) and `frame-wise mask(s)`.
 
+If you want to specify the video resolution for processing or avoid running out of memory, you can use the `--set_size` flag and set the video size of `--width` and `--height`:
+```shell
+# process a 576x320 video
+python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png --set_size --height 320 --width 576 
+```
+
+Regarding the issue of `running out of memory`, you can mitigate it by reducing the number of local neighbors through decreasing the `--neighbor_length (default 20)` or reducing the number of global references by increasing the `--ref_stride parameter (default 10)`.
 
 ### Dataset preparation for training and evaluation
 <table>

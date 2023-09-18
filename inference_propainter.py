@@ -31,10 +31,18 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
 
 
 # resize frames
-def resize_frames(frames, size=None):
+def resize_frames(frames, size=None):    
     if size is not None:
-        frames = [f.resize(size) for f in frames]
-    return frames
+        out_size = size
+        process_size = (out_size[0]-out_size[0]%8, out_size[1]-out_size[1]%8)
+        frames = [f.resize(process_size) for f in frames]
+    else:
+        out_size = frames[0].size
+        process_size = (out_size[0]-out_size[0]%8, out_size[1]-out_size[1]%8)
+        if not out_size == process_size:
+            frames = [f.resize(process_size) for f in frames]
+        
+    return frames, process_size, out_size
 
 
 #  read frames from video
@@ -78,7 +86,8 @@ def read_mask(mpath, length, size, flow_mask_dilates=8, mask_dilates=5):
             masks_img.append(Image.open(os.path.join(mpath, mp)))
           
     for mask_img in masks_img:
-        mask_img = mask_img.resize(size, Image.NEAREST)
+        if size is not None:
+            mask_img = mask_img.resize(size, Image.NEAREST)
         mask_img = np.array(mask_img.convert('L'))
 
         # Dilate 8 pixel so that all known pixel is trustworthy
@@ -174,8 +183,11 @@ if __name__ == '__main__':
             help='Path of the mask(s) or mask folder.')
     parser.add_argument('-o', '--output', type=str, default='results', 
             help='Output folder. Default: results')
-    parser.add_argument('--size', type=tuple, default=(432, 240), 
-            help='The resolution (w, h) of video.')
+    parser.add_argument("--set_size", action='store_true', default=False)
+    parser.add_argument('--height', type=int, default=240, 
+            help='Height of the processing video.')
+    parser.add_argument('--width', type=int, default=432, 
+            help='Width of the processing video.')
     parser.add_argument("--ref_stride", type=int, default=10,
             help='stride of global reference frames.')
     parser.add_argument("--ref_num", type=int, default=-1,
@@ -186,18 +198,24 @@ if __name__ == '__main__':
             help='iterations for RAFT inference.')
     parser.add_argument('--mode', default='video_inpainting', choices=['video_inpainting', 'video_outpainting'], 
             help="modes: video_inpainting / video_outpainting")
-    parser.add_argument('--scale', type=tuple, default=(1, 1.2), 
-            help='Outpainting scale (s_h, s_w) for video_outpainting mode. Default: (1, 1.2)')
+    parser.add_argument('--scale_h', type=float, default=1.0, 
+            help='Outpainting scale of height for video_outpainting mode.')
+    parser.add_argument('--scale_w', type=float, default=1.2, 
+            help='Outpainting scale of width for video_outpainting mode.')
     parser.add_argument('--save_fps', type=int, default=24, 
             help='Frame per second. Default: 24')
     parser.add_argument('--save_frames', action='store_true', 
             help='Save output frames. Default: False')
-        
+         
     args = parser.parse_args()
 
-    size = args.size
+    if args.set_size:
+        size = (args.width, args.height)
+    else:
+        size = None
+
     frames, fps, video_name = read_frame_from_videos(args.video)
-    frames = resize_frames(frames, size)
+    frames, size, out_size = resize_frames(frames, size)
     
     fps = args.save_fps if fps is None else fps
     save_root = os.path.join(args.output, video_name)
@@ -210,8 +228,8 @@ if __name__ == '__main__':
                                               flow_mask_dilates=4, mask_dilates=4)
         w, h = size
     elif args.mode == 'video_outpainting':
-        assert args.scale is not None, 'Please provide a outpainting scale (s_h, s_w).'
-        frames, flow_masks, masks_dilated, size = extrapolation(frames, args.scale)
+        assert args.scale_h is not None and args.scale_w is not None, 'Please provide a outpainting scale (s_h, s_w).'
+        frames, flow_masks, masks_dilated, size = extrapolation(frames, (args.scale_h, args.scale_w))
         w, h = size
     else:
         raise NotImplementedError
@@ -341,6 +359,7 @@ if __name__ == '__main__':
     if args.save_frames:
         for idx in range(video_length):
             f = comp_frames[idx]
+            f = cv2.resize(f, out_size, interpolation = cv2.INTER_CUBIC)
             f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
             img_save_root = os.path.join(save_root, 'frames', str(idx).zfill(4)+'.png')
             imwrite(f, img_save_root)
@@ -351,8 +370,10 @@ if __name__ == '__main__':
     #     masked_frame_for_save = [i[10:-10,10:-10] for i in masked_frame_for_save]
     
     # save videos frame
-    imageio.mimwrite(os.path.join(save_root, 'masked_in.mp4'), masked_frame_for_save, fps=fps, quality=8)
-    imageio.mimwrite(os.path.join(save_root, 'inpaint_out.mp4'), comp_frames, fps=fps, quality=8)
+    masked_frame_for_save = [cv2.resize(f, out_size) for f in masked_frame_for_save]
+    comp_frames = [cv2.resize(f, out_size) for f in comp_frames]
+    imageio.mimwrite(os.path.join(save_root, 'masked_in.mp4'), masked_frame_for_save, fps=fps, quality=7)
+    imageio.mimwrite(os.path.join(save_root, 'inpaint_out.mp4'), comp_frames, fps=fps, quality=7)
     
     print(f'\nAll results are saved in {save_root}')
     
