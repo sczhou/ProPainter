@@ -103,7 +103,7 @@ class RAFT(nn.Module):
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
         if self.args.alternate_corr:
-            corr_fn = CorrBlockAlternate(fmap1, fmap2, radius=self.args.corr_radius)
+            corr_fn = AlternateCorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
         else:
             corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 
