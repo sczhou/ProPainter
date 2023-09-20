@@ -49,7 +49,7 @@
 
 ## Update
 
-- **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#memory-efficient-inference) requirements. 🏂
+- **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#-memory-efficient-inference) requirements. 🚀
 - **2023.09.07**: Our code and model are publicly available. 🐳
 - **2023.09.01**: This repo is created.
 
@@ -135,7 +135,7 @@ weights
    |- README.md
 ```
 
-### 🚀 Quick test
+### 🏂 Quick test
 We provide some examples in the [`inputs`](./inputs) folder. 
 Run the following commands to try it out:
 ```shell
@@ -154,7 +154,7 @@ If you want to specify the video resolution for processing or avoid running out 
 python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png --height 320 --width 576 --fp16
 ```
 
-### 🏂 Memory-efficient inference
+### 🚀 Memory-efficient inference
 
 Video inpainting typically requires a significant amount of GPU memory. Here, we offer various features that facilitate memory-efficient inference, effectively avoiding the Out-Of-Memory (OOM) error. You can use the following options to reduce memory usage further:
 
