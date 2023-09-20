@@ -62,8 +62,9 @@ def read_frame_from_videos(frame_root):
             frame = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             frames.append(frame)
         fps = None
-        
-    return frames, fps, video_name
+    size = frames[0].size
+
+    return frames, fps, size, video_name
 
 
 def binary_mask(mask, th=0.1):
@@ -177,44 +178,55 @@ if __name__ == '__main__':
     device = get_device()
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--video', type=str, default='inputs/object_removal/bmx-trees', 
-            help='Path of the input video or image folder.')
-    parser.add_argument('-m', '--mask', type=str, default='inputs/object_removal/bmx-trees_mask', 
-            help='Path of the mask(s) or mask folder.')
-    parser.add_argument('-o', '--output', type=str, default='results', 
-            help='Output folder. Default: results')
-    parser.add_argument("--set_size", action='store_true', default=False)
-    parser.add_argument('--height', type=int, default=240, 
-            help='Height of the processing video.')
-    parser.add_argument('--width', type=int, default=432, 
-            help='Width of the processing video.')
-    parser.add_argument("--ref_stride", type=int, default=10,
-            help='stride of global reference frames.')
-    parser.add_argument("--ref_num", type=int, default=-1,
-            help='num of reference frames.')
-    parser.add_argument("--neighbor_length", type=int, default=20,
-            help='length of local neighboring frames.')
-    parser.add_argument("--raft_iter", type=int, default=20,
-            help='iterations for RAFT inference.')
-    parser.add_argument('--mode', default='video_inpainting', choices=['video_inpainting', 'video_outpainting'], 
-            help="modes: video_inpainting / video_outpainting")
-    parser.add_argument('--scale_h', type=float, default=1.0, 
-            help='Outpainting scale of height for video_outpainting mode.')
-    parser.add_argument('--scale_w', type=float, default=1.2, 
-            help='Outpainting scale of width for video_outpainting mode.')
-    parser.add_argument('--save_fps', type=int, default=24, 
-            help='Frame per second. Default: 24')
-    parser.add_argument('--save_frames', action='store_true', 
-            help='Save output frames. Default: False')
-         
+    parser.add_argument(
+        '-i', '--video', type=str, default='inputs/object_removal/bmx-trees', help='Path of the input video or image folder.')
+    parser.add_argument(
+        '-m', '--mask', type=str, default='inputs/object_removal/bmx-trees_mask', help='Path of the mask(s) or mask folder.')
+    parser.add_argument(
+        '-o', '--output', type=str, default='results', help='Output folder. Default: results')
+    parser.add_argument(
+        "--resize_ratio", type=float, default=1.0, help='Resize scale for processing video.')
+    parser.add_argument(
+        '--height', type=int, default=-1, help='Height of the processing video.')
+    parser.add_argument(
+        '--width', type=int, default=-1, help='Width of the processing video.')
+    parser.add_argument(
+        '--mask_dilation', type=int, default=4, help='Mask dilation for video and flow masking.')
+    parser.add_argument(
+        "--ref_stride", type=int, default=10, help='Stride of global reference frames.')
+    parser.add_argument(
+        "--ref_num", type=int, default=-1, help='Number of reference frames.')
+    parser.add_argument(
+        "--neighbor_length", type=int, default=10, help='Length of local neighboring frames.')
+    parser.add_argument(
+        "--subvideo_lentgh", type=int, default=80, help='Length of sub-video for long video inference.')
+    parser.add_argument(
+        "--raft_iter", type=int, default=20, help='Iterations for RAFT inference.')
+    parser.add_argument(
+        '--mode', default='video_inpainting', choices=['video_inpainting', 'video_outpainting'], help="Modes: video_inpainting / video_outpainting")
+    parser.add_argument(
+        '--scale_h', type=float, default=1.0, help='Outpainting scale of height for video_outpainting mode.')
+    parser.add_argument(
+        '--scale_w', type=float, default=1.2, help='Outpainting scale of width for video_outpainting mode.')
+    parser.add_argument(
+        '--save_fps', type=int, default=24, help='Frame per second. Default: 24')
+    parser.add_argument(
+        '--save_frames', action='store_true', help='Save output frames. Default: False')
+    parser.add_argument(
+        '--fp16', action='store_true', help='Use fp16 (half precision) during inference. Default: fp32 (single precision).')
+
     args = parser.parse_args()
 
-    if args.set_size:
-        size = (args.width, args.height)
-    else:
-        size = None
+    # Use fp16 precision during inference to reduce running memory cost
+    use_half = True if args.fp16 else False 
 
-    frames, fps, video_name = read_frame_from_videos(args.video)
+
+    frames, fps, size, video_name = read_frame_from_videos(args.video)
+    if not args.width == -1 and not args.height == -1:
+        size = (args.width, args.height)
+    if not args.resize_ratio == 1.0:
+        size = (int(args.resize_ratio * size[0]), int(args.resize_ratio * size[1]))
+
     frames, size, out_size = resize_frames(frames, size)
     
     fps = args.save_fps if fps is None else fps
@@ -225,7 +237,8 @@ if __name__ == '__main__':
     if args.mode == 'video_inpainting':
         frames_len = len(frames)
         flow_masks, masks_dilated = read_mask(args.mask, frames_len, size, 
-                                              flow_mask_dilates=4, mask_dilates=4)
+                                              flow_mask_dilates=args.mask_dilation,
+                                              mask_dilates=args.mask_dilation)
         w, h = size
     elif args.mode == 'video_outpainting':
         assert args.scale_h is not None and args.scale_w is not None, 'Please provide a outpainting scale (s_h, s_w).'
@@ -268,6 +281,7 @@ if __name__ == '__main__':
     fix_flow_complete.to(device)
     fix_flow_complete.eval()
 
+
     ##############################################
     # set up ProPainter model
     ##############################################
@@ -276,20 +290,27 @@ if __name__ == '__main__':
     model = InpaintGenerator(model_path=ckpt_path).to(device)
     model.eval()
 
-    video_length = frames.size(1)
-    masked_frames = frames * (1 - masks_dilated)
     
     ##############################################
     # ProPainter inference
     ##############################################
+    video_length = frames.size(1)
     print(f'\nProcessing: {video_name} [{video_length} frames]...')
     with torch.no_grad():
         # ---- compute flow ----
-        short_len = 60
-        if frames.size(1) > short_len:
+        if frames.size(-1) <= 640: 
+            short_clip_len = 12
+        elif frames.size(-1) <= 720: 
+            short_clip_len = 8
+        elif frames.size(-1) <= 1280:
+            short_clip_len = 4
+        else:
+            short_clip_len = 2
+            
+        if frames.size(1) > short_clip_len:
             gt_flows_f_list, gt_flows_b_list = [], []
-            for f in range(0, video_length, short_len):
-                end_f = min(video_length, f + short_len)
+            for f in range(0, video_length, short_clip_len):
+                end_f = min(video_length, f + short_clip_len)
                 if f == 0:
                     flows_f, flows_b = fix_raft(frames[:,f:end_f], iters=args.raft_iter)
                 else:
@@ -304,11 +325,19 @@ if __name__ == '__main__':
         else:
             gt_flows_bi = fix_raft(frames, iters=args.raft_iter)
 
+
+        if use_half:
+            frames, flow_masks, masks_dilated = frames.half(), flow_masks.half(), masks_dilated.half()
+            gt_flows_bi = (gt_flows_bi[0].half(), gt_flows_bi[1].half())
+            fix_flow_complete = fix_flow_complete.half()
+            model = model.half()
+
         # ---- complete flow ----
         pred_flows_bi, _ = fix_flow_complete.forward_bidirect_flow(gt_flows_bi, flow_masks)
         pred_flows_bi = fix_flow_complete.combine_flow(gt_flows_bi, pred_flows_bi, flow_masks)
 
         # ---- temporal propagation ----
+        masked_frames = frames * (1 - masks_dilated)
         prop_imgs, updated_local_masks = model.img_propagation(masked_frames, pred_flows_bi, masks_dilated, 'nearest')
 
         b, t, _, _, _ = masks_dilated.size()
@@ -316,6 +345,7 @@ if __name__ == '__main__':
         updated_frames = frames * (1-masks_dilated) + prop_imgs.view(b, t, 3, h, w) * masks_dilated # merge
         
         del gt_flows_bi, frames, prop_imgs, updated_local_masks
+        torch.cuda.empty_cache()
 
 
     ori_frames = frames_inp
@@ -354,6 +384,8 @@ if __name__ == '__main__':
                     comp_frames[idx] = comp_frames[idx].astype(np.float32) * 0.5 + img.astype(np.float32) * 0.5
                     
                 comp_frames[idx] = comp_frames[idx].astype(np.uint8)
+        
+        torch.cuda.empty_cache()
                 
     # save each frame
     if args.save_frames:

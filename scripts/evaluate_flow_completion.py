@@ -51,6 +51,7 @@ def tensor2np(array):
 
 def main_worker(args):
     # set up datasets and data loader
+    args.size = (args.width, args.height)
     test_dataset = TestDataset(vars(args))
 
     test_loader = DataLoader(test_dataset,
@@ -177,7 +178,8 @@ def main_worker(args):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--size', default=(432, 240), type=tuple)
+    parser.add_argument('--height', type=int, default=240)
+    parser.add_argument('--width', type=int, default=432)
     parser.add_argument('--raft_model_path', default='weights/raft-things.pth', type=str)
     parser.add_argument('--fc_model_path', default='weights/recurrent_flow_completion.pth', type=str)
     parser.add_argument('--dataset', choices=['davis', 'youtube-vos'], type=str)

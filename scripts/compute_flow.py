@@ -40,7 +40,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--root_path', type=str, default='your_dataset_root/youtube-vos/JPEGImages')
     parser.add_argument('-o', '--save_path', type=str, default='your_dataset_root/youtube-vos/Flows_flo')
-    parser.add_argument('-s', '--size', type=tuple, default=(432, 240))
+    parser.add_argument('--height', type=int, default=240)
+    parser.add_argument('--width', type=int, default=432)
     
     args = parser.parse_args()
     
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     
     root_path = args.root_path
     save_path = args.save_path
-    h_up, w_up = args.size
+    h_new, w_new = (args.height, args.width)
     
     file_list = sorted(os.listdir(root_path))
     for f in file_list:
@@ -69,16 +70,16 @@ if __name__ == '__main__':
 
             # upsize to a multiple of 16
             # h, w = img1.shape[2:4]
-            # w_up = w if (w % 16) == 0 else 16 * (w // 16 + 1)
-            # h_up = h if (h % 16) == 0 else 16 * (h // 16 + 1)
+            # w_new = w if (w % 16) == 0 else 16 * (w // 16 + 1)
+            # h_new = h if (h % 16) == 0 else 16 * (h // 16 + 1)
 
 
             img1 = F.interpolate(input=img1,
-                                size=(h_up, w_up),
+                                size=(h_new, w_new),
                                 mode='bilinear',
                                 align_corners=False)
             img2 = F.interpolate(input=img2,
-                                size=(h_up, w_up),
+                                size=(h_new, w_new),
                                 mode='bilinear',
                                 align_corners=False)
 
@@ -93,8 +94,8 @@ if __name__ == '__main__':
             flow_f = flow_f[0].permute(1,2,0).cpu().numpy()
             flow_b = flow_b[0].permute(1,2,0).cpu().numpy()
 
-            # flow_f = resize_flow(flow_f, w_up, h_up)
-            # flow_b = resize_flow(flow_b, w_up, h_up)
+            # flow_f = resize_flow(flow_f, w_new, h_new)
+            # flow_b = resize_flow(flow_b, w_new, h_new)
 
             save_flow_f = os.path.join(save_path, f, f'{m_list[i][:-4]}_{m_list[i+1][:-4]}_f.flo')
             save_flow_b = os.path.join(save_path, f, f'{m_list[i+1][:-4]}_{m_list[i][:-4]}_b.flo')

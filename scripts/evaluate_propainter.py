@@ -32,6 +32,7 @@ def get_ref_index(neighbor_ids, length, ref_stride=10):
 
 
 def main_worker(args):
+    args.size = (args.width, args.height)
     w, h = args.size    
     # set up datasets and data loader
     assert (args.dataset == 'davis') or args.dataset == 'youtube-vos', \
@@ -255,7 +256,8 @@ def main_worker(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--size', default=(432, 240), type=tuple)
+    parser.add_argument('--height', type=int, default=240)
+    parser.add_argument('--width', type=int, default=432)
     parser.add_argument("--ref_stride", type=int, default=10)
     parser.add_argument("--neighbor_length", type=int, default=20)
     parser.add_argument("--raft_iter", type=int, default=20)

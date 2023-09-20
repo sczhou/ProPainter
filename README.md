@@ -49,12 +49,19 @@
 
 ## Update
 
-- **2023.09.07**: Our code and model are publicly available. :whale: 
+- **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#memory-efficient-inference) requirements. 🏂
+- **2023.09.07**: Our code and model are publicly available. 🐳
 - **2023.09.01**: This repo is created.
 
+
+### TODO
+- [ ] Make a interactive Gradio demo.
+- [ ] Make a Colab demo.
+- [x] ~~Update features for memory-efficient inference.~~
+  
 ## Results
 
-#### 🏂 Object Removal
+#### 👨🏻‍🎨 Object Removal
 <table>
 <tr>
    <td> 
@@ -89,7 +96,6 @@
    </td>
 </tr>
 </table>
-
 
 
 
@@ -129,7 +135,7 @@ weights
    |- README.md
 ```
 
-### Quick test
+### 🚀 Quick test
 We provide some examples in the [`inputs`](./inputs) folder. 
 Run the following commands to try it out:
 ```shell
@@ -138,18 +144,38 @@ python inference_propainter.py --video inputs/object_removal/bmx-trees --mask in
 # The second example (watermark removal)
 python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png
 ```
+
 The results will be saved in the `results` folder.
 To test your own videos, please prepare the input `mp4 video` (or `split frames`) and `frame-wise mask(s)`.
 
-If you want to specify the video resolution for processing or avoid running out of memory, you can use the `--set_size` flag and set the video size of `--width` and `--height`:
+If you want to specify the video resolution for processing or avoid running out of memory, you can set the video size of `--width` and `--height`:
 ```shell
-# process a 576x320 video
-python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png --set_size --height 320 --width 576 
+# process a 576x320 video; set --fp16 to use fp16 (half precision) during inference.
+python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png --height 320 --width 576 --fp16
 ```
 
-Regarding the issue of **running out of memory**, you can mitigate it by reducing the number of local neighbors through decreasing the `--neighbor_length` (default 20) or reducing the number of global references by increasing the `--ref_stride` (default 10).
+### 🏂 Memory-efficient inference
 
-### Dataset preparation for training and evaluation
+Video inpainting typically requires a significant amount of GPU memory. Here, we offer various features that facilitate memory-efficient inference, effectively avoiding the Out-Of-Memory (OOM) error. You can use the following options to reduce memory usage further:
+
+   - Reduce the number of local neighbors through decreasing the `--neighbor_length` (default 10).
+   - Reduce the number of global references by increasing the `--ref_stride` (default 10).
+   - Set the `--resize_ratio` (default 1.0) to resize the processing video.
+   - Set a smaller video size via specifying the `--width` and `--height`.
+   - Set `--fp16` to use fp16 (half precision) during inference.
+   - Reduce the frames of sub-videos `--subvideo_lentgh` (default 80), which effectively decouples GPU memory costs and video length. (coming soon!)
+
+Blow shows the estimated GPU memory requirements for different sub-video lengths with fp32/fp16 precision: 
+
+| Resolution | 50 frames | 80 frames |
+| :---       | :----:    | :----:    |
+| 1280 x 720 | 28G / 19G | OOM / 25G |
+| 720 x 480  | 11G / 7G  | 13G / 8G  |
+| 640 x 480  | 10G / 6G  | 12G / 7G  |
+| 320 x 240  | 3G  / 2G  | 4G  / 3G  | 
+
+
+## Dataset preparation
 <table>
 <thead>
   <tr>
@@ -203,7 +229,26 @@ datasets
       |- train.json
       |- test.json   
 ```
-### Evaluation
+
+## Training
+Our training configures are provided in [`train_flowcomp.json`](./configs/train_flowcomp.json) (for Recurrent Flow Completion Network) and [`train_propainter.json`](./configs/train_propainter.json) (for ProPainter).
+
+Run one of the following commands for training:
+```shell
+ # For training Recurrent Flow Completion Network
+ python train.py -c configs/train_flowcomp.json
+ # For training ProPainter
+ python train.py -c configs/train_propainter.json
+```
+You can run the **same command** to **resume** your training.
+
+To speed up the training process, you can precompute optical flow for the training dataset using the following command:
+```shell
+ # Compute optical flow for training dataset
+ python scripts/compute_flow.py --root_path <dataset_root> --save_path <save_flow_root> --height 240 --width 432
+```
+
+## Evaluation
 Run one of the following commands for evaluation:
 ```shell
  # For evaluating flow completion model
@@ -215,17 +260,6 @@ Run one of the following commands for evaluation:
 The scores and results will also be saved in the `results_eval` folder.
 Please `--save_results` for further [evaluating temporal warping error](https://github.com/phoenix104104/fast_blind_video_consistency#evaluation).
 
-### Training
-Our training configures are provided in [`train_flowcomp.json`](./configs/train_flowcomp.json) (for Recurrent Flow Completion Network) and [`train_propainter.json`](./configs/train_propainter.json) (for ProPainter).
-
-Run one of the following commands for training:
-```shell
- # For training Recurrent Flow Completion Network
- python train.py -c configs/train_flowcomp.json
- # For training ProPainter
- python train.py -c configs/train_propainter.json
-```
-You can run the **same command** to **resume** your training.
 
 
 ## Citation

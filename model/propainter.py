@@ -25,7 +25,8 @@ def fbConsistencyCheck(flow_fw, flow_bw, alpha1=0.01, alpha2=0.5):
     mag_sq_fw = length_sq(flow_fw) + length_sq(flow_bw_warped)  # |wf| + |wb(wf(x))|
     occ_thresh_fw = alpha1 * mag_sq_fw + alpha2
 
-    fb_valid_fw = (length_sq(flow_diff_fw) < occ_thresh_fw).float()
+    # fb_valid_fw = (length_sq(flow_diff_fw) < occ_thresh_fw).float()
+    fb_valid_fw = (length_sq(flow_diff_fw) < occ_thresh_fw).to(flow_fw)
     return fb_valid_fw
         
         
@@ -97,7 +98,8 @@ class BidirectionalPropagation(nn.Module):
     def binary_mask(self, mask, th=0.1):
         mask[mask>th] = 1
         mask[mask<=th] = 0
-        return mask.float()
+        # return mask.float()
+        return mask.to(mask)
 
     def forward(self, x, flows_forward, flows_backward, mask, interpolation='bilinear'):
         """
