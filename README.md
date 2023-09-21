@@ -163,7 +163,7 @@ Video inpainting typically requires a significant amount of GPU memory. Here, we
    - Set the `--resize_ratio` (default 1.0) to resize the processing video.
    - Set a smaller video size via specifying the `--width` and `--height`.
    - Set `--fp16` to use fp16 (half precision) during inference.
-   - Reduce the frames of sub-videos `--subvideo_lentgh` (default 80), which effectively decouples GPU memory costs and video length. (coming soon!)
+   - Reduce the frames of sub-videos `--subvideo_length` (default 80), which effectively decouples GPU memory costs and video length.
 
 Blow shows the estimated GPU memory requirements for different sub-video lengths with fp32/fp16 precision: 
 
@@ -196,7 +196,7 @@ Blow shows the estimated GPU memory requirements for different sub-video lengths
   </tr>
   <tr>
     <td>Masks</td>
-    <td colspan="2"> [<a href="https://drive.google.com/file/d/1dFTneS_zaJAHjglxU10gYzr1-xALgHa4/view?usp=sharing">Google Drive</a>] [<a href="https://pan.baidu.com/s/1JC-UKmlQfjhVtD81196cxA?pwd=87e3">Baidu Disk</a>] (For reproducing paper results; provided in <a href="https://github.com/MCG-NKU/E2FGVI">E<sup>2</sup>FGVI</a> paper) </td>
+    <td colspan="2"> [<a href="https://drive.google.com/file/d/1dFTneS_zaJAHjglxU10gYzr1-xALgHa4/view?usp=sharing">Google Drive</a>] [<a href="https://pan.baidu.com/s/1JC-UKmlQfjhVtD81196cxA?pwd=87e3">Baidu Disk</a>] (For reproducing paper results; provided in <a href="https://arxiv.org/abs/2309.03897">ProPainter</a> paper) </td>
   </tr>
 </tbody>
 </table>
