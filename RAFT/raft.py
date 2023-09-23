@@ -43,7 +43,7 @@ class RAFT(nn.Module):
 
         if 'alternate_corr' not in args._get_kwargs():
             args.alternate_corr = False
-
+        
         # feature network, context network, and update block
         if args.small:
             self.fnet = SmallEncoder(output_dim=128, norm_fn='instance', dropout=args.dropout)
@@ -102,8 +102,9 @@ class RAFT(nn.Module):
 
         fmap1 = fmap1.float()
         fmap2 = fmap2.float()
+        
         if self.args.alternate_corr:
-            corr_fn = CorrBlockAlternate(fmap1, fmap2, radius=self.args.corr_radius)
+            corr_fn = AlternateCorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
         else:
             corr_fn = CorrBlock(fmap1, fmap2, radius=self.args.corr_radius)
 

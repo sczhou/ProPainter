@@ -1,4 +1,3 @@
-# Modified from https://github.com/open-mmlab/mmcv/blob/master/mmcv/video/optflow.py  # noqa: E501
 import cv2
 import numpy as np
 import os

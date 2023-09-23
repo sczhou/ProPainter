@@ -104,6 +104,7 @@
 
 
 ## Dependencies and Installation
+
 1. Clone Repo
 
    ```bash
@@ -113,13 +114,18 @@
 2. Create Conda Environment and Install Dependencies
 
    ```bash
-   conda env create -f environment.yaml
+   # create new anaconda env
+   conda create -n propainter python=3.8 -y
    conda activate propainter
+
+   # install python dependencies
+   pip3 install -r requirements.txt
    ```
-   - Python >= 3.7
-   - PyTorch >= 1.6.0
+
    - CUDA >= 9.2
-   - [mmcv-full](https://github.com/open-mmlab/mmcv/tree/v1.4.8#installation) (refer the command table to install v1.4.8)
+   - PyTorch >= 1.7.1
+   - Torchvision >= 0.8.2
+   - Other required packages in `requirements.txt`
 
 ## Get Started
 ### Prepare pretrained models

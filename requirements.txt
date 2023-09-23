@@ -1,0 +1,16 @@
+av
+addict
+einops
+future
+numpy
+scipy
+opencv-python
+matplotlib
+scikit-image
+torch>=1.7.1
+torchvision>=0.8.2
+imageio-ffmpeg
+pyyaml
+requests
+timm
+yapf

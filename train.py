@@ -24,10 +24,10 @@ from core.dist import (
     get_master_ip,
 )
 
-parser = argparse.ArgumentParser(description='E2FGVI')
+parser = argparse.ArgumentParser()
 parser.add_argument('-c',
                     '--config',
-                    default='configs/train_e2fgvi.json',
+                    default='configs/train_propainter.json',
                     type=str)
 parser.add_argument('-p', '--port', default='23490', type=str)
 args = parser.parse_args()

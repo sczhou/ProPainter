@@ -4,15 +4,16 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
 
 from einops import rearrange
-
-from mmcv.ops import ModulatedDeformConv2d, modulated_deform_conv2d
 
 from model.modules.base_module import BaseNetwork
 from model.modules.sparse_transformer import TemporalSparseTransformerBlock, SoftSplit, SoftComp
 from model.modules.spectral_norm import spectral_norm as _spectral_norm
 from model.modules.flow_loss_utils import flow_warp
+from model.modules.deformconv import ModulatedDeformConv2d
+
 from .misc import constant_init
 
 def length_sq(x):
@@ -63,10 +64,9 @@ class DeformableAlignment(ModulatedDeformConv2d):
         # mask
         mask = torch.sigmoid(mask)
 
-        return modulated_deform_conv2d(x, offset, mask, self.weight, self.bias,
-                                       self.stride, self.padding,
-                                       self.dilation, self.groups,
-                                       self.deform_groups)
+        return torchvision.ops.deform_conv2d(x, offset, self.weight, self.bias, 
+                                             self.stride, self.padding,
+                                             self.dilation, mask)
 
 
 class BidirectionalPropagation(nn.Module):
