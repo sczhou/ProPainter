@@ -48,7 +48,7 @@
 
 
 ## Update
-
+- **2023.09.24**: We remove the watermark removal demo officially to prevent the misuse of our work for unethical purposes.
 - **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#-memory-efficient-inference) requirements. 🚀
 - **2023.09.07**: Our code and model are publicly available. 🐳
 - **2023.09.01**: This repo is created.
@@ -69,18 +69,6 @@
    </td>
    <td> 
       <img src="assets/object_removal2.gif">
-   </td>
-</tr>
-</table>
-
-#### 🌈 Watermark Removal
-<table>
-<tr>
-   <td> 
-      <img src="assets/watermark_removal1.gif">
-   </td>
-   <td> 
-      <img src="assets/watermark_removal2.gif">
    </td>
 </tr>
 </table>
@@ -147,8 +135,8 @@ Run the following commands to try it out:
 ```shell
 # The first example (object removal)
 python inference_propainter.py --video inputs/object_removal/bmx-trees --mask inputs/object_removal/bmx-trees_mask 
-# The second example (watermark removal)
-python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png
+# The second example (video completion)
+python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask.png
 ```
 
 The results will be saved in the `results` folder.
@@ -157,7 +145,7 @@ To test your own videos, please prepare the input `mp4 video` (or `split frames`
 If you want to specify the video resolution for processing or avoid running out of memory, you can set the video size of `--width` and `--height`:
 ```shell
 # process a 576x320 video; set --fp16 to use fp16 (half precision) during inference.
-python inference_propainter.py --video inputs/watermark_removal/running_car.mp4 --mask inputs/watermark_removal/mask.png --height 320 --width 576 --fp16
+python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask.png --height 320 --width 576 --fp16
 ```
 
 ### 🚀 Memory-efficient inference
