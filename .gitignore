@@ -8,8 +8,8 @@ version.py
 # *.png
 # *.jpeg
 # *.jpg
+# *.gif
 *.pt
-*.gif
 *.pth
 *.dat
 *.zip
