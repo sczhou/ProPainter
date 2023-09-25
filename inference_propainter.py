@@ -165,7 +165,7 @@ def get_ref_index(mid_neighbor_id, neighbor_ids, length, ref_stride=10, ref_num=
     else:
         start_idx = max(0, mid_neighbor_id - ref_stride * (ref_num // 2))
         end_idx = min(length, mid_neighbor_id + ref_stride * (ref_num // 2))
-        for i in range(start_idx, end_idx + 1, ref_stride):
+        for i in range(start_idx, end_idx, ref_stride):
             if i not in neighbor_ids:
                 if len(ref_index) > ref_num:
                     break
@@ -254,6 +254,7 @@ if __name__ == '__main__':
         green = np.zeros([h, w, 3]) 
         green[:,:,1] = 255
         alpha = 0.6
+        # alpha = 1.0
         fuse_img = (1-alpha)*img + alpha*green
         fuse_img = mask_ * fuse_img + (1-mask_)*img
         masked_frame_for_save.append(fuse_img.astype(np.uint8))

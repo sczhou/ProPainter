@@ -30,7 +30,7 @@
         <a href="https://arxiv.org/abs/2309.03897" target='_blank'>
         <img src="https://img.shields.io/badge/arXiv-2309.03897-b31b1b.svg">
         </a>
-        <a href="https://youtu.be/Cc89WF-2zz0" target='_blank'>
+        <a href="https://youtu.be/92EHfgCO5-Q" target='_blank'>
         <img src="https://img.shields.io/badge/Demo%20Video-%23FF0000.svg?logo=YouTube&logoColor=white">
         </a>
         <img src="https://api.infinitescript.com/badgen/count?name=sczhou/ProPainter">
@@ -48,7 +48,7 @@
 
 
 ## Update
-- **2023.09.24**: We remove the watermark removal demo officially to prevent the misuse of our work for unethical purposes.
+- **2023.09.24**: We remove the watermark removal demos officially to prevent the misuse of our work for unethical purposes.
 - **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#-memory-efficient-inference) requirements. 🚀
 - **2023.09.07**: Our code and model are publicly available. 🐳
 - **2023.09.01**: This repo is created.
@@ -81,6 +81,14 @@
    </td>
    <td> 
       <img src="assets/video_completion2.gif">
+   </td>
+</tr>
+<tr>
+   <td> 
+      <img src="assets/video_completion3.gif">
+   </td>
+   <td> 
+      <img src="assets/video_completion4.gif">
    </td>
 </tr>
 </table>
@@ -136,7 +144,7 @@ Run the following commands to try it out:
 # The first example (object removal)
 python inference_propainter.py --video inputs/object_removal/bmx-trees --mask inputs/object_removal/bmx-trees_mask 
 # The second example (video completion)
-python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask.png
+python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask_square.png --height 240 --width 432
 ```
 
 The results will be saved in the `results` folder.
@@ -145,7 +153,7 @@ To test your own videos, please prepare the input `mp4 video` (or `split frames`
 If you want to specify the video resolution for processing or avoid running out of memory, you can set the video size of `--width` and `--height`:
 ```shell
 # process a 576x320 video; set --fp16 to use fp16 (half precision) during inference.
-python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask.png --height 320 --width 576 --fp16
+python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask_square.png --height 320 --width 576 --fp16
 ```
 
 ### 🚀 Memory-efficient inference
