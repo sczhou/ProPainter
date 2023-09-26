@@ -288,7 +288,7 @@ class Trainer:
             local_masks = masks[:, :l_t, ...].contiguous()
 
             # get gt optical flow
-            if flows_f == 'None' or flows_b == 'None':
+            if flows_f[0] == 'None' or flows_b[0] == 'None':
                 gt_flows_bi = self.fix_raft(gt_local_frames)
             else:
                 gt_flows_bi = (flows_f.to(device), flows_b.to(device))
