@@ -33,7 +33,9 @@
         <a href="https://youtu.be/92EHfgCO5-Q" target='_blank'>
         <img src="https://img.shields.io/badge/Demo%20Video-%23FF0000.svg?logo=YouTube&logoColor=white">
         </a>
-        <img src="https://api.infinitescript.com/badgen/count?name=sczhou/ProPainter">
+        <img src="https://api.infinitescript.com/badgen/count?name=sczhou/ProPainter"> 
+        
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/19uQfU5_Mj9bjrIDsZimVkH7l2P105AYb?usp=sharing)
     </h4>
 </div>
 
