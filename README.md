@@ -55,7 +55,7 @@
 
 
 ### TODO
-- [ ] Make a interactive Gradio demo.
+- [ ] Make an interactive Gradio demo.
 - [ ] Make a Colab demo.
 - [x] ~~Update features for memory-efficient inference.~~
   
