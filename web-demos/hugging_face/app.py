@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../../")
+
 import os
 import json
 import time
@@ -13,11 +16,12 @@ import gradio as gr
 from tools.painter import mask_painter
 from track_anything import TrackingAnything
 
+from utils.download_util import load_file_from_url
+
 
 def parse_augment():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, default="cuda:0")
-    parser.add_argument('--sam_model_type', type=str, default="vit_h")
     parser.add_argument('--port', type=int, default=8000, help="only useful when running gradio applications")  
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--mask_save', default=False)
@@ -126,11 +130,6 @@ def get_end_number(track_pause_number_slider, video_state, interactive_state):
     operation_log = [("",""),("Set the tracking finish at frame {}".format(track_pause_number_slider),"Normal")]
 
     return video_state["painted_images"][track_pause_number_slider],interactive_state, operation_log
-
-def get_resize_ratio(resize_ratio_slider, interactive_state):
-    interactive_state["resize_ratio"] = resize_ratio_slider
-
-    return interactive_state
 
 # use sam to get the mask
 def sam_refine(video_state, point_prompt, click_state, interactive_state, evt:gr.SelectData):
@@ -264,7 +263,7 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
     return video_output, video_state, interactive_state, operation_log
 
 # inpaint 
-def inpaint_video(video_state, interactive_state, dilate_radius_number, subvideo_length_number, neighbor_length_number, ref_stride_number, mask_dropdown):
+def inpaint_video(video_state, resize_ratio_number, dilate_radius_number, raft_iter_number, subvideo_length_number, neighbor_length_number, ref_stride_number, mask_dropdown):
     operation_log = [("",""), ("Removed the selected masks.","Normal")]
 
     frames = np.asarray(video_state["origin_images"])
@@ -286,8 +285,9 @@ def inpaint_video(video_state, interactive_state, dilate_radius_number, subvideo
     # inpaint for videos
     inpainted_frames = model.baseinpainter.inpaint(frames, 
                                                    inpaint_masks, 
-                                                   ratio=interactive_state["resize_ratio"], 
+                                                   ratio=resize_ratio_number, 
                                                    dilate_radius=dilate_radius_number,
+                                                   raft_iter=raft_iter_number,
                                                    subvideo_length=subvideo_length_number, 
                                                    neighbor_length=neighbor_length_number, 
                                                    ref_stride=ref_stride_number)   # numpy array, T, H, W, 3
@@ -314,31 +314,18 @@ def generate_video_from_frames(frames, output_path, fps=30):
 
 # args, defined in track_anything.py
 args = parse_augment()
-
-# check and download checkpoints if needed
-SAM_checkpoint_dict = {
-    'vit_h': "sam_vit_h_4b8939.pth",
-    'vit_l': "sam_vit_l_0b3195.pth", 
-    "vit_b": "sam_vit_b_01ec64.pth"
-}
-
-SAM_checkpoint_url_dict = {
-    'vit_h': "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth",
-    'vit_l': "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth",
-    'vit_b': "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"
-}
-
-xmem_checkpoint = "XMem-s012.pth"
-xmem_checkpoint_url = "https://github.com/hkchengrex/XMem/releases/download/v1.0/XMem-s012.pth"
-
+pretrain_model_url = 'https://github.com/sczhou/ProPainter/releases/download/v0.1.0/'
 checkpoint_fodler = os.path.join('..', '..', 'weights')
-sam_checkpoint = SAM_checkpoint_dict[args.sam_model_type] 
-sam_checkpoint_url = SAM_checkpoint_url_dict[args.sam_model_type]
-sam_checkpoint = os.path.join(checkpoint_fodler, sam_checkpoint)
-xmem_checkpoint = os.path.join(checkpoint_fodler, xmem_checkpoint)
+
+sam_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'sam_vit_h_4b8939.pth'), checkpoint_fodler)
+xmem_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'XMem-s012.pth'), checkpoint_fodler)
+# cutie_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'cutie-base-mega.pth'), checkpoint_fodler)
+propainter_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'ProPainter.pth'), checkpoint_fodler)
+raft_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'raft-things.pth'), checkpoint_fodler)
+flow_completion_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'recurrent_flow_completion.pth'), checkpoint_fodler)
 
 # initialize sam, xmem, propainter models
-model = TrackingAnything(sam_checkpoint, xmem_checkpoint, checkpoint_fodler, args)
+model = TrackingAnything(sam_checkpoint, xmem_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args)
 
 title = r"""<h1 align="center">ProPainter: Improving Propagation and Transformer for Video Inpainting</h1>"""
 
@@ -403,7 +390,6 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
             "masks": []
         },
         "track_end_number": None,
-        "resize_ratio": 1,
         }
     )
 
@@ -428,20 +414,26 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
         with gr.Row():
             with gr.Accordion('ProPainter Parameters', open=False):
                 with gr.Row():
-                    resize_ratio_slider = gr.Slider(label='Resize ratio',
+                    resize_ratio_number = gr.Slider(label='Resize ratio',
                                             minimum=0.01,
                                             maximum=1.0,
                                             step=0.01,
                                             value=1.0)
+                    raft_iter_number = gr.Slider(label='Iterations for RAFT inference.',
+                                            minimum=10,
+                                            maximum=50,
+                                            step=1,
+                                            value=20,
+                                            precision=0)
                 with gr.Row():
-                    dilate_radius_number = gr.Number(label='Mask dilation for video and flow masking.',
+                    dilate_radius_number = gr.Slider(label='Mask dilation for video and flow masking.',
                                             minimum=0,
                                             maximum=50,
                                             step=1,
-                                            value=4,
+                                            value=10,
                                             precision=0)
 
-                    subvideo_length_number = gr.Number(label='Length of sub-video for long video inference.',
+                    subvideo_length_number = gr.Slider(label='Length of sub-video for long video inference.',
                                             minimum=1,
                                             maximum=200,
                                             step=1,
@@ -449,14 +441,14 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             precision=0)
 
                 with gr.Row():
-                    neighbor_length_number = gr.Number(label='Length of local neighboring frames.',
+                    neighbor_length_number = gr.Slider(label='Length of local neighboring frames.',
                                             minimum=1,
                                             maximum=50,
                                             step=1,
                                             value=10,
                                             precision=0)
                     
-                    ref_stride_number = gr.Number(label='Stride of global reference frames.',
+                    ref_stride_number = gr.Slider(label='Stride of global reference frames.',
                                             minimum=1,
                                             maximum=50,
                                             step=1,
@@ -523,9 +515,6 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     track_pause_number_slider.release(fn=get_end_number, 
                                    inputs=[track_pause_number_slider, video_state, interactive_state], 
                                    outputs=[template_frame, interactive_state, run_status], api_name="end_image")
-    resize_ratio_slider.release(fn=get_resize_ratio, 
-                                   inputs=[resize_ratio_slider, interactive_state], 
-                                   outputs=[interactive_state], api_name="resize_ratio")
     
     # click select image to get mask using sam
     template_frame.select(
@@ -557,7 +546,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     # inpaint video from select image and mask
     inpaint_video_predict_button.click(
         fn=inpaint_video,
-        inputs=[video_state, interactive_state, dilate_radius_number, subvideo_length_number, neighbor_length_number, ref_stride_number, mask_dropdown],
+        inputs=[video_state, resize_ratio_number, dilate_radius_number, raft_iter_number, subvideo_length_number, neighbor_length_number, ref_stride_number, mask_dropdown],
         outputs=[video_output, run_status]
     )
 
@@ -592,7 +581,6 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
             "masks": []
         },
         "track_end_number": 0,
-        "resize_ratio": 1
         },
         [[],[]],
         None,
@@ -626,7 +614,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     # set example
     gr.Markdown("##  Examples")
     gr.Examples(
-        examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample0.mp4"]],
+        examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample0.mp4", "test-sample1.mp4", "test-sample2.mp4", "test-sample3.mp4"]],
         inputs=[video_input],
     )
     gr.Markdown(article)

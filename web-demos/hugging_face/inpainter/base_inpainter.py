@@ -10,17 +10,13 @@ from tqdm import tqdm
 import torch
 import torchvision
 
-sys.path.append("../../")
 from model.modules.flow_comp_raft import RAFT_bi
 from model.recurrent_flow_completion import RecurrentFlowCompleteNet
 from model.propainter import InpaintGenerator
-from utils.download_util import load_file_from_url
 from core.utils import to_tensors
 
 import warnings
 warnings.filterwarnings("ignore")
-
-pretrain_model_url = 'https://github.com/sczhou/ProPainter/releases/download/v0.1.0/'
 
 
 def imwrite(img, file_path, params=None, auto_mkdir=True):
@@ -165,20 +161,16 @@ def read_mask_demo(masks, length, size, flow_mask_dilates=8, mask_dilates=5):
 
 
 class ProInpainter:
-	def __init__(self, weights_folder, device="cuda:0", use_half=True):
+	def __init__(self, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, device="cuda:0", use_half=True):
 		self.device = device
 		self.use_half = use_half
 
 		##############################################
 		# set up RAFT and flow competition model
 		##############################################
-		ckpt_path = load_file_from_url(url=os.path.join(pretrain_model_url, 'raft-things.pth'), 
-										model_dir=weights_folder, progress=True, file_name=None)
-		self.fix_raft = RAFT_bi(ckpt_path, self.device)
-		
-		ckpt_path = load_file_from_url(url=os.path.join(pretrain_model_url, 'recurrent_flow_completion.pth'), 
-										model_dir=weights_folder, progress=True, file_name=None)
-		self.fix_flow_complete = RecurrentFlowCompleteNet(ckpt_path)
+		self.fix_raft = RAFT_bi(raft_checkpoint, self.device)
+
+		self.fix_flow_complete = RecurrentFlowCompleteNet(flow_completion_checkpoint)
 		for p in self.fix_flow_complete.parameters():
 			p.requires_grad = False
 		self.fix_flow_complete.to(self.device)
@@ -187,16 +179,14 @@ class ProInpainter:
 		##############################################
 		# set up ProPainter model
 		##############################################
-		ckpt_path = load_file_from_url(url=os.path.join(pretrain_model_url, 'ProPainter.pth'), 
-										model_dir=weights_folder, progress=True, file_name=None)
-		self.model = InpaintGenerator(model_path=ckpt_path).to(self.device)
+		self.model = InpaintGenerator(model_path=propainter_checkpoint).to(self.device)
 		self.model.eval()
 
 		if self.use_half:
 			self.fix_flow_complete = self.fix_flow_complete.half()
 			self.model = self.model.half()
 
-	def inpaint(self, npframes, masks, ratio=1.0,  dilate_radius=4, raft_iter=20, subvideo_length=80, neighbor_length=10, ref_stride=10):
+	def inpaint(self, npframes, masks, ratio=1.0, dilate_radius=4, raft_iter=20, subvideo_length=80, neighbor_length=10, ref_stride=10):
 		"""
 		Perform Inpainting for video subsets
 		

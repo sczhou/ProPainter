@@ -7,14 +7,11 @@ from inpainter.base_inpainter import ProInpainter
 
 
 class TrackingAnything():
-    def __init__(self, sam_checkpoint, xmem_checkpoint, inpainter_checkpoint_fodler, args):
+    def __init__(self, sam_checkpoint, xmem_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args):
         self.args = args
-        self.sam_checkpoint = sam_checkpoint
-        self.xmem_checkpoint = xmem_checkpoint
-        self.inpainter_checkpoint_fodler = inpainter_checkpoint_fodler
-        self.samcontroler = SamControler(self.sam_checkpoint, args.sam_model_type, args.device)
-        self.xmem = BaseTracker(self.xmem_checkpoint, device=args.device)
-        self.baseinpainter = ProInpainter(self.inpainter_checkpoint_fodler, args.device) 
+        self.samcontroler = SamControler(sam_checkpoint, 'vit_h', args.device)
+        self.xmem = BaseTracker(xmem_checkpoint, device=args.device)
+        self.baseinpainter = ProInpainter(propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args.device) 
        
     def first_frame_click(self, image: np.ndarray, points:np.ndarray, labels: np.ndarray, multimask=True):
         mask, logit, painted_image = self.samcontroler.first_frame_click(image, points, labels, multimask)
@@ -30,7 +27,6 @@ class TrackingAnything():
                 masks.append(mask)
                 logits.append(logit)
                 painted_images.append(painted_image)
-                
             else:
                 mask, logit, painted_image = self.xmem.track(images[i])
                 masks.append(mask)
