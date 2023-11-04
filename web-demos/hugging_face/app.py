@@ -96,6 +96,7 @@ def get_frames_from_video(video_input, video_state):
     model.samcontroler.sam_controler.set_image(video_state["origin_images"][0])
     return video_state, video_info, video_state["origin_images"][0], gr.update(visible=True, maximum=len(frames), value=1), gr.update(visible=True, maximum=len(frames), value=len(frames)), \
                         gr.update(visible=True),\
+                        gr.update(visible=True), gr.update(visible=True),\
                         gr.update(visible=True), gr.update(visible=True), \
                         gr.update(visible=True), gr.update(visible=True), \
                         gr.update(visible=True), gr.update(visible=True), \
@@ -319,13 +320,14 @@ checkpoint_fodler = os.path.join('..', '..', 'weights')
 
 sam_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'sam_vit_h_4b8939.pth'), checkpoint_fodler)
 xmem_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'XMem-s012.pth'), checkpoint_fodler)
-# cutie_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'cutie-base-mega.pth'), checkpoint_fodler)
 propainter_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'ProPainter.pth'), checkpoint_fodler)
 raft_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'raft-things.pth'), checkpoint_fodler)
 flow_completion_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'recurrent_flow_completion.pth'), checkpoint_fodler)
 
 # initialize sam, xmem, propainter models
+model = None
 model = TrackingAnything(sam_checkpoint, xmem_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args)
+
 
 title = r"""<h1 align="center">ProPainter: Improving Propagation and Transformer for Video Inpainting</h1>"""
 
@@ -375,6 +377,11 @@ button {border-radius: 8px !important;}
 .add_button {background-color: #4CAF50 !important;}
 .remove_button {background-color: #f44336 !important;}
 .mask_button_group {gap: 10px !important;}
+.video {height: 300px !important;}
+.video .wrap.svelte-lcpz3o {display: flex !important; align-items: center !important; justify-content: center !important;}
+.video .wrap.svelte-lcpz3o > :first-child {height: 100% !important;}
+.output_container {width: 50% !important; margin: auto !important;}
+.jc_center {justify-content: center !important;}
 """
 
 with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
@@ -439,7 +446,6 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             step=1,
                                             value=80,
                                             precision=0)
-
                 with gr.Row():
                     neighbor_length_number = gr.Slider(label='Length of local neighboring frames.',
                                             minimum=1,
@@ -455,47 +461,49 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             value=10,
                                             precision=0)
 
-    # for user video input
+    
     with gr.Column():
-        with gr.Row(scale=0.4):
-            video_input = gr.Video(autosize=True)
-            with gr.Column():
+        # input video
+        gr.Markdown("## Step1: Upload video")
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=2):      
+                video_input = gr.Video(elem_classes="video")
+                extract_frames_button = gr.Button(value="Get video info", interactive=True, variant="primary") 
+            with gr.Column(scale=2):
                 video_info = gr.Textbox(label="Video Info")
-                video_info_text = gr.Textbox(value="If you want to use the inpaint function, it is best to git clone the repo and use a machine with more VRAM locally.", label="Tips for running this demo.")
+                run_status = gr.HighlightedText(value=[("Text","Error"),("to be","Label 2"),("highlighted","Label 3")])
         
-        with gr.Row():
-                # put the template frame under the radio button
-                with gr.Column():
-                    # extract frames
-                    with gr.Column():
-                        extract_frames_button = gr.Button(value="Get video info", interactive=True, variant="primary") 
-
-                     # click points settins, negative or positive, mode continuous or single
-                    with gr.Row():
-                        point_prompt = gr.Radio(
-                            choices=["Positive", "Negative"],
-                            value="Positive",
-                            label="Point prompt",
-                            interactive=True,
-                            visible=False,
-                            min_width=100,
-                            scale=1)
-                        with gr.Column(scale=2, elem_classes="mask_button_group"):
-                            clear_button_click = gr.Button(value="Clear clicks", interactive=True, visible=False)
-                            remove_mask_button = gr.Button(value="Remove mask", interactive=True, visible=False, elem_classes="remove_button")
-                            Add_mask_button = gr.Button(value="Add mask", interactive=True, visible=False, elem_classes="add_button")
-
-                    template_frame = gr.Image(type="pil",interactive=True, elem_id="template_frame", visible=False).style(height=360)
-                    image_selection_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track start frame", visible=False)
-                    track_pause_number_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track end frame", visible=False)
-            
-                with gr.Column():
-                    run_status = gr.HighlightedText(value=[("Text","Error"),("to be","Label 2"),("highlighted","Label 3")], visible=False)
+        # add masks
+        step2_title = gr.Markdown("## Step2: Add masks", visible=False)
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=2):
+                template_frame = gr.Image(type="pil",interactive=True, elem_id="template_frame", visible=False).style(height=300)
+                image_selection_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track start frame", visible=False)
+                track_pause_number_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track end frame", visible=False)
+            with gr.Column(scale=2, elem_classes="jc_center"):
+                with gr.Row():
+                    with gr.Column(scale=2, elem_classes="mask_button_group"):
+                        clear_button_click = gr.Button(value="Clear clicks", interactive=True, visible=False)
+                        remove_mask_button = gr.Button(value="Remove mask", interactive=True, visible=False, elem_classes="remove_button")
+                        Add_mask_button = gr.Button(value="Add mask", interactive=True, visible=False, elem_classes="add_button")
+                    point_prompt = gr.Radio(
+                        choices=["Positive", "Negative"],
+                        value="Positive",
+                        label="Point prompt",
+                        interactive=True,
+                        visible=False,
+                        min_width=100,
+                        scale=1)
+                with gr.Row():
                     mask_dropdown = gr.Dropdown(multiselect=True, value=[], label="Mask selection", info=".", visible=False)
-                    video_output = gr.Video(autosize=True, visible=False).style(height=360)
-                    with gr.Row():
-                        tracking_video_predict_button = gr.Button(value="Tracking", visible=False)
-                        inpaint_video_predict_button = gr.Button(value="Inpainting", visible=False)
+            
+        # output video
+        step3_title = gr.Markdown("## Step3: Track masks and get the inpainting result", visible=False)
+        with gr.Row(equal_height=True):
+            video_output = gr.Video(scale=2, autosize=True, visible=False, elem_classes="video")
+            with gr.Column(scale=2, elem_classes="jc_center"):
+                tracking_video_predict_button = gr.Button(value="① Tracking", visible=False)
+                inpaint_video_predict_button = gr.Button(value="② Inpainting", visible=False)
 
     # first step: get the video information 
     extract_frames_button.click(
@@ -505,7 +513,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
         ],
         outputs=[video_state, video_info, template_frame,
                  image_selection_slider, track_pause_number_slider,point_prompt, clear_button_click, Add_mask_button, template_frame,
-                 tracking_video_predict_button, video_output, mask_dropdown, remove_mask_button, inpaint_video_predict_button, run_status]
+                 tracking_video_predict_button, video_output, mask_dropdown, remove_mask_button, inpaint_video_predict_button, step2_title, step3_title, run_status]
     )   
 
     # second step: select images from slider
@@ -612,7 +620,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     )
 
     # set example
-    gr.Markdown("##  Examples")
+    gr.Markdown("## Examples")
     gr.Examples(
         examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample0.mp4", "test-sample1.mp4", "test-sample2.mp4", "test-sample3.mp4"]],
         inputs=[video_input],
