@@ -347,7 +347,6 @@ raft_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'raft-thin
 flow_completion_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'recurrent_flow_completion.pth'), checkpoint_fodler)
 
 # initialize sam, xmem, propainter models
-model = None
 model = TrackingAnything(sam_checkpoint, xmem_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args)
 
 
@@ -449,36 +448,36 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             step=0.01,
                                             value=1.0)
                     raft_iter_number = gr.Slider(label='Iterations for RAFT inference.',
-                                            minimum=10,
-                                            maximum=50,
+                                            minimum=5,
+                                            maximum=20,
                                             step=1,
                                             value=20,
                                             precision=0)
                 with gr.Row():
                     dilate_radius_number = gr.Slider(label='Mask dilation for video and flow masking.',
                                             minimum=0,
-                                            maximum=50,
+                                            maximum=10,
                                             step=1,
-                                            value=10,
+                                            value=4,
                                             precision=0)
 
                     subvideo_length_number = gr.Slider(label='Length of sub-video for long video inference.',
-                                            minimum=1,
+                                            minimum=40,
                                             maximum=200,
                                             step=1,
                                             value=80,
                                             precision=0)
                 with gr.Row():
                     neighbor_length_number = gr.Slider(label='Length of local neighboring frames.',
-                                            minimum=1,
-                                            maximum=50,
+                                            minimum=5,
+                                            maximum=20,
                                             step=1,
                                             value=10,
                                             precision=0)
                     
                     ref_stride_number = gr.Slider(label='Stride of global reference frames.',
-                                            minimum=1,
-                                            maximum=50,
+                                            minimum=5,
+                                            maximum=20,
                                             step=1,
                                             value=10,
                                             precision=0)
