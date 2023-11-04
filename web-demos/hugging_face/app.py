@@ -62,7 +62,7 @@ def get_frames_from_video(video_input, video_state):
     video_path = video_input
     frames = []
     user_name = time.time()
-    operation_log = [("",""),("Upload video already. Try click the image for adding targets to track and inpaint.","Normal")]
+    operation_log = [("",""),("Video uploaded! Try to click the image shown in step2 to add masks.","Normal")]
     try:
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -91,7 +91,7 @@ def get_frames_from_video(video_input, video_state):
         "select_frame_number": 0,
         "fps": fps
         }
-    video_info = "Video Name: {},\nFPS: {},\nTotal Frames: {},\nImage Size:{}".format(video_state["video_name"], video_state["fps"], len(frames), image_size)
+    video_info = "Video Name: {},\nFPS: {},\nTotal Frames: {},\nImage Size:{}".format(video_state["video_name"], round(video_state["fps"], 0), len(frames), image_size)
     model.samcontroler.sam_controler.reset_image() 
     model.samcontroler.sam_controler.set_image(video_state["origin_images"][0])
     return video_state, video_info, video_state["origin_images"][0], gr.update(visible=True, maximum=len(frames), value=1), gr.update(visible=True, maximum=len(frames), value=len(frames)), \
@@ -115,20 +115,14 @@ def select_template(image_selection_slider, video_state, interactive_state, mask
     model.samcontroler.sam_controler.reset_image()
     model.samcontroler.sam_controler.set_image(video_state["origin_images"][image_selection_slider])
 
-    # update the masks when select a new template frame
-    # if video_state["masks"][image_selection_slider] is not None:
-        # video_state["painted_images"][image_selection_slider] = mask_painter(video_state["origin_images"][image_selection_slider], video_state["masks"][image_selection_slider])
-    if mask_dropdown:
-        print("ok")
-    operation_log = [("",""), ("Select frame {}. Try click image and add mask for tracking.".format(image_selection_slider),"Normal")]
-
+    operation_log = [("",""), ("Select tracking start frame {}. Try to click the image to add masks for tracking.".format(image_selection_slider),"Normal")]
 
     return video_state["painted_images"][image_selection_slider], video_state, interactive_state, operation_log
 
 # set the tracking end frame
 def get_end_number(track_pause_number_slider, video_state, interactive_state):
     interactive_state["track_end_number"] = track_pause_number_slider
-    operation_log = [("",""),("Set the tracking finish at frame {}".format(track_pause_number_slider),"Normal")]
+    operation_log = [("",""),("Select tracking finish frame {}.Try to click the image to add masks for tracking.".format(track_pause_number_slider),"Normal")]
 
     return video_state["painted_images"][track_pause_number_slider],interactive_state, operation_log
 
@@ -162,7 +156,7 @@ def sam_refine(video_state, point_prompt, click_state, interactive_state, evt:gr
     video_state["logits"][video_state["select_frame_number"]] = logit
     video_state["painted_images"][video_state["select_frame_number"]] = painted_image
 
-    operation_log = [("",""), ("Use SAM for segment. You can try add positive and negative points by clicking. Or press Clear clicks button to refresh the image. Press Add mask button when you are satisfied with the segment","Normal")]
+    operation_log = [("",""), ("You can try to add positive or negative points by clicking, click Clear clicks button to refresh the image, click Add mask button when you are satisfied with the segment, or click Remove mask button to remove all added masks.","Normal")]
     return painted_image, video_state, interactive_state, operation_log
 
 def add_multi_mask(video_state, interactive_state, mask_dropdown):
@@ -175,20 +169,20 @@ def add_multi_mask(video_state, interactive_state, mask_dropdown):
 
         operation_log = [("",""),("Added a mask, use the mask select for target tracking or inpainting.","Normal")]
     except:
-        operation_log = [("Please click the left image to generate mask.", "Error"), ("","")]
+        operation_log = [("Please click the image in step2 to generate masks.", "Error"), ("","")]
     return interactive_state, gr.update(choices=interactive_state["multi_mask"]["mask_names"], value=mask_dropdown), select_frame, [[],[]], operation_log
 
 def clear_click(video_state, click_state):
     click_state = [[],[]]
     template_frame = video_state["origin_images"][video_state["select_frame_number"]]
-    operation_log = [("",""), ("Clear points history and refresh the image.","Normal")]
+    operation_log = [("",""), ("Cleared points history and refresh the image.","Normal")]
     return template_frame, click_state, operation_log
 
 def remove_multi_mask(interactive_state, mask_dropdown):
     interactive_state["multi_mask"]["mask_names"]= []
     interactive_state["multi_mask"]["masks"] = []
 
-    operation_log = [("",""), ("Remove all mask, please add new masks","Normal")]
+    operation_log = [("",""), ("Remove all masks. Try to add new masks","Normal")]
     return interactive_state, gr.update(choices=[],value=[]), operation_log
 
 def show_mask(video_state, interactive_state, mask_dropdown):
@@ -199,12 +193,12 @@ def show_mask(video_state, interactive_state, mask_dropdown):
         mask = interactive_state["multi_mask"]["masks"][mask_number]
         select_frame = mask_painter(select_frame, mask.astype('uint8'), mask_color=mask_number+2)
     
-    operation_log = [("",""), ("Select {} for tracking or inpainting".format(mask_dropdown),"Normal")]
+    operation_log = [("",""), ("Added masks {}. If you want to do the inpainting with current masks, please go to step3, and click the Tracking button first and then Inpainting button.".format(mask_dropdown),"Normal")]
     return select_frame, operation_log
 
 # tracking vos
 def vos_tracking_video(video_state, interactive_state, mask_dropdown):
-    operation_log = [("",""), ("Track the selected masks, and then you can select the masks for inpainting.","Normal")]
+    operation_log = [("",""), ("Tracking finished! Try to click the Inpainting button to get the inpainting result.","Normal")]
     model.xmem.clear_memory()
     if interactive_state["track_end_number"]:
         following_frames = video_state["origin_images"][video_state["select_frame_number"]:interactive_state["track_end_number"]]
@@ -227,7 +221,7 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
     # operation error
     if len(np.unique(template_mask))==1:
         template_mask[0][0]=1
-        operation_log = [("Error! Please add at least one mask to track by clicking the left image.","Error"), ("","")]
+        operation_log = [("Please add at least one mask to track by clicking the image in step2.","Error"), ("","")]
         # return video_output, video_state, interactive_state, operation_error
     masks, logits, painted_images = model.generator(images=following_frames, template_mask=template_mask)
     # clear GPU memory
@@ -265,7 +259,7 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
 
 # inpaint 
 def inpaint_video(video_state, resize_ratio_number, dilate_radius_number, raft_iter_number, subvideo_length_number, neighbor_length_number, ref_stride_number, mask_dropdown):
-    operation_log = [("",""), ("Removed the selected masks.","Normal")]
+    operation_log = [("",""), ("Inpainting finished!","Normal")]
 
     frames = np.asarray(video_state["origin_images"])
     fps = video_state["fps"]
@@ -312,6 +306,34 @@ def generate_video_from_frames(frames, output_path, fps=30):
         os.makedirs(os.path.dirname(output_path))
     torchvision.io.write_video(output_path, frames, fps=fps, video_codec="libx264")
     return output_path
+
+def restart():
+    return {
+            "user_name": "",
+            "video_name": "",
+            "origin_images": None,
+            "painted_images": None,
+            "masks": None,
+            "inpaint_masks": None,
+            "logits": None,
+            "select_frame_number": 0,
+            "fps": 30
+        }, {
+            "inference_times": 0,
+            "negative_click_times" : 0,
+            "positive_click_times": 0,
+            "mask_save": args.mask_save,
+            "multi_mask": {
+                "mask_names": [],
+                "masks": []
+            },
+            "track_end_number": None,
+        }, [[],[]], None, None, \
+        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), \
+        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), \
+        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), \
+        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), "", \
+        gr.update(visible=True, value=[("",""), ("Try to upload your video and click the Get video info button to get started!", "Normal")])
 
 # args, defined in track_anything.py
 args = parse_augment()
@@ -460,8 +482,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             step=1,
                                             value=10,
                                             precision=0)
-
-    
+  
     with gr.Column():
         # input video
         gr.Markdown("## Step1: Upload video")
@@ -471,7 +492,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                 extract_frames_button = gr.Button(value="Get video info", interactive=True, variant="primary") 
             with gr.Column(scale=2):
                 video_info = gr.Textbox(label="Video Info")
-                run_status = gr.HighlightedText(value=[("Text","Error"),("to be","Label 2"),("highlighted","Label 3")])
+                run_status = gr.HighlightedText(value=[("",""), ("Try to upload your video and click the Get svideo info button to get started!", "Normal")])
         
         # add masks
         step2_title = gr.Markdown("## Step2: Add masks", visible=False)
@@ -566,48 +587,32 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     )
     
     # clear input
-    video_input.clear(
-        lambda: (
-        {
-        "user_name": "",
-        "video_name": "",
-        "origin_images": None,
-        "painted_images": None,
-        "masks": None,
-        "inpaint_masks": None,
-        "logits": None,
-        "select_frame_number": 0,
-        "fps": 30
-        },
-        {
-        "inference_times": 0,
-        "negative_click_times" : 0,
-        "positive_click_times": 0,
-        "mask_save": args.mask_save,
-        "multi_mask": {
-            "mask_names": [],
-            "masks": []
-        },
-        "track_end_number": 0,
-        },
-        [[],[]],
-        None,
-        None,
-        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), \
-        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), \
-        gr.update(visible=False), gr.update(visible=False), gr.update(visible=False, value=[]), gr.update(visible=False), \
-        gr.update(visible=False), gr.update(visible=False)
-                        
-        ),
-        [],
-        [ 
+    video_input.change(
+        fn=restart,
+        inputs=[],
+        outputs=[ 
             video_state,
             interactive_state,
             click_state,
             video_output,
             template_frame,
             tracking_video_predict_button, image_selection_slider , track_pause_number_slider,point_prompt, clear_button_click, 
-            Add_mask_button, template_frame, tracking_video_predict_button, video_output, mask_dropdown, remove_mask_button,inpaint_video_predict_button, run_status
+            Add_mask_button, template_frame, tracking_video_predict_button, video_output, mask_dropdown, remove_mask_button,inpaint_video_predict_button, step2_title, step3_title, video_info, run_status
+        ],
+        queue=False,
+        show_progress=False)
+    
+    video_input.clear(
+        fn=restart,
+        inputs=[],
+        outputs=[ 
+            video_state,
+            interactive_state,
+            click_state,
+            video_output,
+            template_frame,
+            tracking_video_predict_button, image_selection_slider , track_pause_number_slider,point_prompt, clear_button_click, 
+            Add_mask_button, template_frame, tracking_video_predict_button, video_output, mask_dropdown, remove_mask_button,inpaint_video_predict_button, step2_title, step3_title, video_info, run_status
         ],
         queue=False,
         show_progress=False)
