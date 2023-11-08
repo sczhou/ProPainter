@@ -22,6 +22,7 @@ from utils.download_util import load_file_from_url
 def parse_augment():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device', type=str, default="cuda:0")
+    parser.add_argument('--sam_model_type', type=str, default="vit_h")
     parser.add_argument('--port', type=int, default=8000, help="only useful when running gradio applications")  
     parser.add_argument('--debug', action="store_true")
     parser.add_argument('--mask_save', default=False)
@@ -339,9 +340,14 @@ def restart():
 # args, defined in track_anything.py
 args = parse_augment()
 pretrain_model_url = 'https://github.com/sczhou/ProPainter/releases/download/v0.1.0/'
+sam_checkpoint_url_dict = {
+    'vit_h': "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth",
+    'vit_l': "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth",
+    'vit_b': "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth"
+}
 checkpoint_fodler = os.path.join('..', '..', 'weights')
 
-sam_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'sam_vit_h_4b8939.pth'), checkpoint_fodler)
+sam_checkpoint = load_file_from_url(sam_checkpoint_url_dict[args.sam_model_type], checkpoint_fodler)
 cutie_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'cutie-base-mega.pth'), checkpoint_fodler)
 propainter_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'ProPainter.pth'), checkpoint_fodler)
 raft_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'raft-things.pth'), checkpoint_fodler)

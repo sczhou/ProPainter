@@ -9,7 +9,7 @@ from inpainter.base_inpainter import ProInpainter
 class TrackingAnything():
     def __init__(self, sam_checkpoint, cutie_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args):
         self.args = args
-        self.samcontroler = SamControler(sam_checkpoint, 'vit_h', args.device)
+        self.samcontroler = SamControler(sam_checkpoint, args.sam_model_type, args.device)
         self.cutie = BaseTracker(cutie_checkpoint, device=args.device)
         self.baseinpainter = ProInpainter(propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args.device) 
        
