@@ -28,7 +28,7 @@ python app.py
    
 * Step 3: 
    1. Click the `Tracking` button to track the masks for the whole video.
-   2. *[Optional]* Select the ProPainter parameters if the `ProPainter Parameters ` dropdown.
+   2. *[Optional]* Select the ProPainter parameters if the `ProPainter Parameters` dropdown.
    2. Then click `Inpainting` to get the inpainting results.
 ![Step 3](./assets/step3.png)
 
