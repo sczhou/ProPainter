@@ -165,8 +165,7 @@ def add_multi_mask(video_state, interactive_state, mask_dropdown):
         interactive_state["multi_mask"]["masks"].append(mask)
         interactive_state["multi_mask"]["mask_names"].append("mask_{:03d}".format(len(interactive_state["multi_mask"]["masks"])))
         mask_dropdown.append("mask_{:03d}".format(len(interactive_state["multi_mask"]["masks"])))
-        select_frame, run_status = show_mask(video_state, interactive_state, mask_dropdown)
-
+        select_frame, _, _ = show_mask(video_state, interactive_state, mask_dropdown)
         operation_log = [("",""),("Added a mask, use the mask select for target tracking or inpainting.","Normal")]
     except:
         operation_log = [("Please click the image in step2 to generate masks.", "Error"), ("","")]
@@ -289,7 +288,7 @@ def inpaint_video(video_state, resize_ratio_number, dilate_radius_number, raft_i
 
     video_output = generate_video_from_frames(inpainted_frames, output_path="./result/inpaint/{}".format(video_state["video_name"]), fps=fps) # import video_input to name the output video
 
-    return video_output, operation_log
+    return video_output, operation_log, operation_log
 
 # generate video after vos inference
 def generate_video_from_frames(frames, output_path, fps=30):
@@ -492,8 +491,9 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                 video_input = gr.Video(elem_classes="video")
                 extract_frames_button = gr.Button(value="Get video info", interactive=True, variant="primary") 
             with gr.Column(scale=2):
-                video_info = gr.Textbox(label="Video Info")
                 run_status = gr.HighlightedText(value=[("",""), ("Try to upload your video and click the Get svideo info button to get started!", "Normal")])
+                video_info = gr.Textbox(label="Video Info")
+                
         
         # add masks
         step2_title = gr.Markdown("---\n## Step2: Add masks", visible=False)
@@ -503,6 +503,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                 image_selection_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track start frame", visible=False)
                 track_pause_number_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track end frame", visible=False)
             with gr.Column(scale=2, elem_classes="jc_center"):
+                run_status2 = gr.HighlightedText(value=[("",""), ("Try to upload your video and click the Get svideo info button to get started!", "Normal")], visible=False)
                 with gr.Row():
                     with gr.Column(scale=2, elem_classes="mask_button_group"):
                         clear_button_click = gr.Button(value="Clear clicks", interactive=True, visible=False)
@@ -516,9 +517,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                         visible=False,
                         min_width=100,
                         scale=1)
-                    run_status2 = gr.HighlightedText(value=[("",""), ("Try to upload your video and click the Get svideo info button to get started!", "Normal")], visible=False)
-                with gr.Row():
-                    mask_dropdown = gr.Dropdown(multiselect=True, value=[], label="Mask selection", info=".", visible=False)
+                mask_dropdown = gr.Dropdown(multiselect=True, value=[], label="Mask selection", info=".", visible=False)
             
         # output video
         step3_title = gr.Markdown("---\n## Step3: Track masks and get the inpainting result", visible=False)
