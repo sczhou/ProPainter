@@ -54,4 +54,4 @@ This project is licensed under <a rel="license" href="./LICENSE">NTU S-Lab Licen
 
 ## Acknowledgements
 
-The project harnesses the capabilities from [Track Anything](https://github.com/gaomingqi/Track-Anything), [Segment Anything](https://github.com/facebookresearch/segment-anything), [XMem](https://github.com/hkchengrex/XMem), and [E2FGVI](https://github.com/MCG-NKU/E2FGVI). Thanks for their awesome works.
+The project harnesses the capabilities from [Track Anything](https://github.com/gaomingqi/Track-Anything), [Segment Anything](https://github.com/facebookresearch/segment-anything), [Cutie](https://github.com/hkchengrex/Cutie), and [E2FGVI](https://github.com/MCG-NKU/E2FGVI). Thanks for their awesome works.

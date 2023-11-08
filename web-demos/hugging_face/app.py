@@ -100,7 +100,7 @@ def get_frames_from_video(video_input, video_state):
                         gr.update(visible=True), gr.update(visible=True), \
                         gr.update(visible=True), gr.update(visible=True), \
                         gr.update(visible=True), gr.update(visible=True), \
-                        gr.update(visible=True), gr.update(visible=True), \
+                        gr.update(visible=True), gr.update(visible=True, choices=[], values=[]), \
                         gr.update(visible=True, value=operation_log), gr.update(visible=True, value=operation_log)
 
 # get the select frame from gradio slider
@@ -175,7 +175,7 @@ def clear_click(video_state, click_state):
     click_state = [[],[]]
     template_frame = video_state["origin_images"][video_state["select_frame_number"]]
     operation_log = [("",""), ("Cleared points history and refresh the image.","Normal")]
-    return template_frame, click_state, operation_log
+    return template_frame, click_state, operation_log, operation_log
 
 def remove_multi_mask(interactive_state, mask_dropdown):
     interactive_state["multi_mask"]["mask_names"]= []
@@ -537,7 +537,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
         ],
         outputs=[video_state, video_info, template_frame,
                  image_selection_slider, track_pause_number_slider,point_prompt, clear_button_click, Add_mask_button, template_frame,
-                 tracking_video_predict_button, tracking_video_output, inpaiting_video_output, mask_dropdown, remove_mask_button, inpaint_video_predict_button, step2_title, step3_title, run_status, run_status2]
+                 tracking_video_predict_button, tracking_video_output, inpaiting_video_output, remove_mask_button, inpaint_video_predict_button, step2_title, step3_title,mask_dropdown, run_status, run_status2]
     )   
 
     # second step: select images from slider
@@ -600,7 +600,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
             tracking_video_output, inpaiting_video_output,
             template_frame,
             tracking_video_predict_button, image_selection_slider , track_pause_number_slider,point_prompt, clear_button_click, 
-            Add_mask_button, template_frame, tracking_video_predict_button, tracking_video_output, inpaiting_video_output, mask_dropdown, remove_mask_button,inpaint_video_predict_button, step2_title, step3_title, video_info, run_status, run_status2
+            Add_mask_button, template_frame, tracking_video_predict_button, tracking_video_output, inpaiting_video_output, remove_mask_button,inpaint_video_predict_button, step2_title, step3_title, mask_dropdown, video_info, run_status, run_status2
         ],
         queue=False,
         show_progress=False)
@@ -615,7 +615,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
             tracking_video_output, inpaiting_video_output,
             template_frame,
             tracking_video_predict_button, image_selection_slider , track_pause_number_slider,point_prompt, clear_button_click, 
-            Add_mask_button, template_frame, tracking_video_predict_button, tracking_video_output, inpaiting_video_output, mask_dropdown, remove_mask_button,inpaint_video_predict_button, step2_title, step3_title, video_info, run_status, run_status2
+            Add_mask_button, template_frame, tracking_video_predict_button, tracking_video_output, inpaiting_video_output, remove_mask_button,inpaint_video_predict_button, step2_title, step3_title, mask_dropdown, video_info, run_status, run_status2
         ],
         queue=False,
         show_progress=False)
