@@ -198,7 +198,7 @@ def show_mask(video_state, interactive_state, mask_dropdown):
 # tracking vos
 def vos_tracking_video(video_state, interactive_state, mask_dropdown):
     operation_log = [("",""), ("Tracking finished! Try to click the Inpainting button to get the inpainting result.","Normal")]
-    model.xmem.clear_memory()
+    model.cutie.clear_memory()
     if interactive_state["track_end_number"]:
         following_frames = video_state["origin_images"][video_state["select_frame_number"]:interactive_state["track_end_number"]]
     else:
@@ -224,7 +224,7 @@ def vos_tracking_video(video_state, interactive_state, mask_dropdown):
         # return video_output, video_state, interactive_state, operation_error
     masks, logits, painted_images = model.generator(images=following_frames, template_mask=template_mask)
     # clear GPU memory
-    model.xmem.clear_memory()
+    model.cutie.clear_memory()
 
     if interactive_state["track_end_number"]: 
         video_state["masks"][video_state["select_frame_number"]:interactive_state["track_end_number"]] = masks
@@ -342,13 +342,13 @@ pretrain_model_url = 'https://github.com/sczhou/ProPainter/releases/download/v0.
 checkpoint_fodler = os.path.join('..', '..', 'weights')
 
 sam_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'sam_vit_h_4b8939.pth'), checkpoint_fodler)
-xmem_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'XMem-s012.pth'), checkpoint_fodler)
+cutie_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'cutie-base-mega.pth'), checkpoint_fodler)
 propainter_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'ProPainter.pth'), checkpoint_fodler)
 raft_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'raft-things.pth'), checkpoint_fodler)
 flow_completion_checkpoint = load_file_from_url(os.path.join(pretrain_model_url, 'recurrent_flow_completion.pth'), checkpoint_fodler)
 
-# initialize sam, xmem, propainter models
-model = TrackingAnything(sam_checkpoint, xmem_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args)
+# initialize sam, cutie, propainter models
+model = TrackingAnything(sam_checkpoint, cutie_checkpoint, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, args)
 
 
 title = r"""<h1 align="center">ProPainter: Improving Propagation and Transformer for Video Inpainting</h1>"""

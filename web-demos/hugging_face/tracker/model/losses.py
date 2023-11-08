@@ -1,68 +1,97 @@
+from typing import List, Dict
+from omegaconf import DictConfig
+from collections import defaultdict
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
-from collections import defaultdict
+from tracker.utils.point_features import calculate_uncertainty, point_sample, get_uncertain_point_coords_with_randomness
+from tracker.utils.tensor_utils import cls_to_one_hot
 
 
-def dice_loss(input_mask, cls_gt):
-    num_objects = input_mask.shape[1]
-    losses = []
-    for i in range(num_objects):
-        mask = input_mask[:,i].flatten(start_dim=1)
-        # background not in mask, so we add one to cls_gt
-        gt = (cls_gt==(i+1)).float().flatten(start_dim=1)
-        numerator = 2 * (mask * gt).sum(-1)
-        denominator = mask.sum(-1) + gt.sum(-1)
-        loss = 1 - (numerator + 1) / (denominator + 1)
-        losses.append(loss)
-    return torch.cat(losses).mean()
+@torch.jit.script
+def ce_loss(logits: torch.Tensor, soft_gt: torch.Tensor) -> torch.Tensor:
+    # logits: T*C*num_points
+    loss = F.cross_entropy(logits, soft_gt, reduction='none')
+    # sum over temporal dimension
+    return loss.sum(0).mean()
 
 
-# https://stackoverflow.com/questions/63735255/how-do-i-compute-bootstrapped-cross-entropy-loss-in-pytorch
-class BootstrappedCE(nn.Module):
-    def __init__(self, start_warm, end_warm, top_p=0.15):
-        super().__init__()
-
-        self.start_warm = start_warm
-        self.end_warm = end_warm
-        self.top_p = top_p
-
-    def forward(self, input, target, it):
-        if it < self.start_warm:
-            return F.cross_entropy(input, target), 1.0
-
-        raw_loss = F.cross_entropy(input, target, reduction='none').view(-1)
-        num_pixels = raw_loss.numel()
-
-        if it > self.end_warm:
-            this_p = self.top_p
-        else:
-            this_p = self.top_p + (1-self.top_p)*((self.end_warm-it)/(self.end_warm-self.start_warm))
-        loss, _ = torch.topk(raw_loss, int(num_pixels * this_p), sorted=False)
-        return loss.mean(), this_p
+@torch.jit.script
+def dice_loss(mask: torch.Tensor, soft_gt: torch.Tensor) -> torch.Tensor:
+    # mask: T*C*num_points
+    # soft_gt: T*C*num_points
+    # ignores the background
+    mask = mask[:, 1:].flatten(start_dim=2)
+    gt = soft_gt[:, 1:].float().flatten(start_dim=2)
+    numerator = 2 * (mask * gt).sum(-1)
+    denominator = mask.sum(-1) + gt.sum(-1)
+    loss = 1 - (numerator + 1) / (denominator + 1)
+    return loss.sum(0).mean()
 
 
 class LossComputer:
-    def __init__(self, config):
+    def __init__(self, cfg: DictConfig, stage_cfg: DictConfig):
         super().__init__()
-        self.config = config
-        self.bce = BootstrappedCE(config['start_warm'], config['end_warm'])
+        self.point_supervision = stage_cfg.point_supervision
+        self.num_points = stage_cfg.train_num_points
+        self.oversample_ratio = stage_cfg.oversample_ratio
+        self.importance_sample_ratio = stage_cfg.importance_sample_ratio
 
-    def compute(self, data, num_objects, it):
-        losses = defaultdict(int)
+        self.sensory_weight = cfg.model.aux_loss.sensory.weight
+        self.query_weight = cfg.model.aux_loss.query.weight
 
-        b, t = data['rgb'].shape[:2]
+    def mask_loss(self, logits: torch.Tensor,
+                  soft_gt: torch.Tensor) -> (torch.Tensor, torch.Tensor):
+        assert self.point_supervision
 
-        losses['total_loss'] = 0
-        for ti in range(1, t):
-            for bi in range(b):
-                loss, p = self.bce(data[f'logits_{ti}'][bi:bi+1, :num_objects[bi]+1], data['cls_gt'][bi:bi+1,ti,0], it)
-                losses['p'] += p / b / (t-1)
-                losses[f'ce_loss_{ti}'] += loss / b
+        with torch.no_grad():
+            # sample point_coords
+            point_coords = get_uncertain_point_coords_with_randomness(
+                logits, lambda x: calculate_uncertainty(x), self.num_points, self.oversample_ratio,
+                self.importance_sample_ratio)
+            # get gt labels
+            point_labels = point_sample(soft_gt, point_coords, align_corners=False)
+        point_logits = point_sample(logits, point_coords, align_corners=False)
+        # point_labels and point_logits: B*C*num_points
 
-            losses['total_loss'] += losses['ce_loss_%d'%ti]
-            losses[f'dice_loss_{ti}'] = dice_loss(data[f'masks_{ti}'], data['cls_gt'][:,ti,0])
-            losses['total_loss'] += losses[f'dice_loss_{ti}']
+        loss_ce = ce_loss(point_logits, point_labels)
+        loss_dice = dice_loss(point_logits.softmax(dim=1), point_labels)
+
+        return loss_ce, loss_dice
+
+    def compute(self, data: Dict[str, torch.Tensor],
+                num_objects: List[int]) -> Dict[str, torch.Tensor]:
+        batch_size, num_frames = data['rgb'].shape[:2]
+        losses = defaultdict(float)
+        t_range = range(1, num_frames)
+
+        for bi in range(batch_size):
+            logits = torch.stack([data[f'logits_{ti}'][bi, :num_objects[bi] + 1] for ti in t_range],
+                                 dim=0)
+            cls_gt = data['cls_gt'][bi, 1:]  # remove gt for the first frame
+            soft_gt = cls_to_one_hot(cls_gt, num_objects[bi])
+
+            loss_ce, loss_dice = self.mask_loss(logits, soft_gt)
+            losses['loss_ce'] += loss_ce / batch_size
+            losses['loss_dice'] += loss_dice / batch_size
+
+            aux = [data[f'aux_{ti}'] for ti in t_range]
+            if 'sensory_logits' in aux[0]:
+                sensory_log = torch.stack(
+                    [a['sensory_logits'][bi, :num_objects[bi] + 1] for a in aux], dim=0)
+                loss_ce, loss_dice = self.mask_loss(sensory_log, soft_gt)
+                losses['aux_sensory_ce'] += loss_ce / batch_size * self.sensory_weight
+                losses['aux_sensory_dice'] += loss_dice / batch_size * self.sensory_weight
+            if 'q_logits' in aux[0]:
+                num_levels = aux[0]['q_logits'].shape[2]
+
+                for l in range(num_levels):
+                    query_log = torch.stack(
+                        [a['q_logits'][bi, :num_objects[bi] + 1, l] for a in aux], dim=0)
+                    loss_ce, loss_dice = self.mask_loss(query_log, soft_gt)
+                    losses[f'aux_query_ce_l{l}'] += loss_ce / batch_size * self.query_weight
+                    losses[f'aux_query_dice_l{l}'] += loss_dice / batch_size * self.query_weight
+
+        losses['total_loss'] = sum(losses.values())
 
         return losses
