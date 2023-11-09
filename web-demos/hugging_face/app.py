@@ -16,21 +16,21 @@ import gradio as gr
 from tools.painter import mask_painter
 from track_anything import TrackingAnything
 
+from model.misc import get_device
 from utils.download_util import load_file_from_url
 
 
 def parse_augment():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--device', type=str, default="cuda:0")
+    parser.add_argument('--device', type=str, default=None)
     parser.add_argument('--sam_model_type', type=str, default="vit_h")
     parser.add_argument('--port', type=int, default=8000, help="only useful when running gradio applications")  
-    parser.add_argument('--debug', action="store_true")
     parser.add_argument('--mask_save', default=False)
     args = parser.parse_args()
-
-    if args.debug:
-        print(args)
     
+    if not args.device:
+        args.device = str(get_device())
+
     return args 
 
 # convert points input to prompt state
@@ -465,7 +465,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             minimum=0,
                                             maximum=10,
                                             step=1,
-                                            value=4,
+                                            value=8,
                                             precision=0)
 
                     subvideo_length_number = gr.Slider(label='Length of sub-video for long video inference.',
@@ -530,10 +530,10 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
         with gr.Row(equal_height=True):
             with gr.Column(scale=2):
                 tracking_video_output = gr.Video(autosize=True, visible=False, elem_classes="video")
-                tracking_video_predict_button = gr.Button(value="① Tracking", visible=False, elem_classes="margin_center")
+                tracking_video_predict_button = gr.Button(value="1. Tracking", visible=False, elem_classes="margin_center")
             with gr.Column(scale=2):
                 inpaiting_video_output = gr.Video(autosize=True, visible=False, elem_classes="video")
-                inpaint_video_predict_button = gr.Button(value="② Inpainting", visible=False, elem_classes="margin_center")
+                inpaint_video_predict_button = gr.Button(value="2. Inpainting", visible=False, elem_classes="margin_center")
 
     # first step: get the video information 
     extract_frames_button.click(
@@ -636,10 +636,10 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     # set example
     gr.Markdown("## Examples")
     gr.Examples(
-        examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample0.mp4", "test-sample1.mp4", "test-sample2.mp4", "test-sample3.mp4"]],
+        examples=[os.path.join(os.path.dirname(__file__), "./test_sample/", test_sample) for test_sample in ["test-sample0.mp4", "test-sample1.mp4", "test-sample2.mp4", "test-sample3.mp4", "test-sample4.mp4"]],
         inputs=[video_input],
     )
     gr.Markdown(article)
 
 iface.queue(concurrency_count=1)
-iface.launch(debug=True, enable_queue=True, server_port=args.port, server_name="0.0.0.0")
+iface.launch(enable_queue=True)
