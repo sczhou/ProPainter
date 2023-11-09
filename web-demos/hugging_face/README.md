@@ -1,5 +1,6 @@
 ## Get Started
 1. Install ProPainter Dependencies
+
 You can follow the [Dependencies and Installation](https://github.com/Luo-Yihang/ProPainter-pr/tree/dev_yihang#dependencies-and-installation)
 
 2. Install Demo Dependencies
