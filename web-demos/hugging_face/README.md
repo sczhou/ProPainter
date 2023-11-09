@@ -1,9 +1,9 @@
 ## Get Started
 1. Install ProPainter Dependencies
 
-You can follow the [Dependencies and Installation](https://github.com/Luo-Yihang/ProPainter-pr/tree/dev_yihang#dependencies-and-installation).
+   You can follow the [Dependencies and Installation](https://github.com/Luo-Yihang/ProPainter-pr/tree/dev_yihang#dependencies-and-installation).
 
-2. Install Demo Dependencies
+3. Install Demo Dependencies
 ```shell
 cd web-demos/hugging_face
 
