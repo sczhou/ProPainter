@@ -1,0 +1,8 @@
+__pycache__/
+.vscode/
+docs/
+debug_images/
+images/
+result/
+vots/
+vots.py

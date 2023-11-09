@@ -33,6 +33,9 @@
         <a href="https://youtu.be/92EHfgCO5-Q" target='_blank'>
         <img src="https://img.shields.io/badge/Demo%20Video-%23FF0000.svg?logo=YouTube&logoColor=white">
         </a>
+        <a href="https://huggingface.co/spaces/sczhou/ProPainter" target='_blank'>
+        <img src="https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue">
+        </a>
         <img src="https://api.infinitescript.com/badgen/count?name=sczhou/ProPainter">
     </h4>
 </div>
@@ -48,6 +51,7 @@
 
 
 ## Update
+- **2023.11.09**: Integrated to :hugs: [Hugging Face](https://huggingface.co/spaces). Try out online demo! [![Hugging Face](https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/spaces/sczhou/ProPainter)
 - **2023.09.24**: We remove the watermark removal demos officially to prevent the misuse of our work for unethical purposes.
 - **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#-memory-efficient-inference) requirements. 🚀
 - **2023.09.07**: Our code and model are publicly available. 🐳
@@ -55,8 +59,8 @@
 
 
 ### TODO
-- [ ] Make a interactive Gradio demo.
 - [ ] Make a Colab demo.
+- [x] ~~Make a interactive Gradio demo.~~
 - [x] ~~Update features for memory-efficient inference.~~
   
 ## Results
