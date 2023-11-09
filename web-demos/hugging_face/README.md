@@ -1,7 +1,7 @@
 ## Get Started
 1. Install ProPainter Dependencies
 
-You can follow the [Dependencies and Installation](https://github.com/Luo-Yihang/ProPainter-pr/tree/dev_yihang#dependencies-and-installation)
+You can follow the [Dependencies and Installation](https://github.com/Luo-Yihang/ProPainter-pr/tree/dev_yihang#dependencies-and-installation).
 
 2. Install Demo Dependencies
 ```shell
@@ -16,7 +16,8 @@ python app.py
 
 ## Usage Guidance
 * Step 1: Upload your video and click the `Get video info` button.
-![Step 1](./assets/step1.png)
+
+   ![Step 1](./assets/step1.png)
 
 * Step 2: 
    1. *[Optional]* Specify the tracking period for the currently added mask by dragging the `Track start frame` or `Track end frame`.
@@ -25,13 +26,15 @@ python app.py
       - *[Optional]* Click `Clear clicks` if you want to reselect the mask area, or
       - *[Optional]* Click `Remove mask` to remove all masks.
    4. *[Optional]* Go back to step 2.1 to add another mask.
-![Step 2](./assets/step2.png)
+
+   ![Step 2](./assets/step2.png)
    
 * Step 3: 
    1. Click the `Tracking` button to track the masks for the whole video.
    2. *[Optional]* Select the ProPainter parameters if the `ProPainter Parameters` dropdown.
    2. Then click `Inpainting` to get the inpainting results.
-![Step 3](./assets/step3.png)
+
+   ![Step 3](./assets/step3.png)
 
 *You can always refer to the `Highlighted Text` box on the page for guidance on the next step!*
 
