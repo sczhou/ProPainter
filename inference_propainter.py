@@ -218,7 +218,8 @@ if __name__ == '__main__':
 
     # Use fp16 precision during inference to reduce running memory cost
     use_half = True if args.fp16 else False 
-
+    if device == torch.device('cpu'):
+        use_half = False
 
     frames, fps, size, video_name = read_frame_from_videos(args.video)
     if not args.width == -1 and not args.height == -1:

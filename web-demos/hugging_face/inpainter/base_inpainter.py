@@ -164,6 +164,8 @@ class ProInpainter:
 	def __init__(self, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, device="cuda:0", use_half=True):
 		self.device = device
 		self.use_half = use_half
+		if self.device == torch.device('cpu'):
+					self.use_half = False
 
 		##############################################
 		# set up RAFT and flow competition model
