@@ -36,6 +36,9 @@
         <a href="https://huggingface.co/spaces/sczhou/ProPainter" target='_blank'>
         <img src="https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue">
         </a>
+        <a href="https://openxlab.org.cn/apps/detail/ShangchenZhou/ProPainter" target='_blank'>
+        <img src="https://img.shields.io/badge/Demo-%F0%9F%91%A8%E2%80%8D%F0%9F%8E%A8%20OpenXLab-blue">
+        </a>
         <img src="https://api.infinitescript.com/badgen/count?name=sczhou/ProPainter">
     </h4>
 </div>
@@ -51,6 +54,7 @@
 
 
 ## Update
+- **2023.11.09**: Integrated to :man_artist: [OpenXLab](https://openxlab.org.cn/apps). Try out online demo! [![OpenXLab](https://img.shields.io/badge/Demo-%F0%9F%91%A8%E2%80%8D%F0%9F%8E%A8%20OpenXLab-blue)](https://openxlab.org.cn/apps/detail/ShangchenZhou/ProPainter)
 - **2023.11.09**: Integrated to :hugs: [Hugging Face](https://huggingface.co/spaces). Try out online demo! [![Hugging Face](https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/spaces/sczhou/ProPainter)
 - **2023.09.24**: We remove the watermark removal demos officially to prevent the misuse of our work for unethical purposes.
 - **2023.09.21**: Add features for memory-efficient inference. Check our [GPU memory](https://github.com/sczhou/ProPainter#-memory-efficient-inference) requirements. 🚀
