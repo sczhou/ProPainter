@@ -101,7 +101,7 @@ def get_frames_from_video(video_input, video_state):
                         gr.update(visible=True), gr.update(visible=True), \
                         gr.update(visible=True), gr.update(visible=True), \
                         gr.update(visible=True), gr.update(visible=True), \
-                        gr.update(visible=True), gr.update(visible=True, choices=[], values=[]), \
+                        gr.update(visible=True), gr.update(visible=True, choices=[], value=[]), \
                         gr.update(visible=True, value=operation_log), gr.update(visible=True, value=operation_log)
 
 # get the select frame from gradio slider
@@ -406,6 +406,7 @@ button {border-radius: 8px !important;}
 .remove_button {background-color: #f44336 !important;}
 .mask_button_group {gap: 10px !important;}
 .video {height: 300px !important;}
+.image {height: 300px !important;}
 .video .wrap.svelte-lcpz3o {display: flex !important; align-items: center !important; justify-content: center !important;}
 .video .wrap.svelte-lcpz3o > :first-child {height: 100% !important;}
 .margin_center {width: 50% !important; margin: auto !important;}
@@ -458,36 +459,31 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
                                             minimum=5,
                                             maximum=20,
                                             step=1,
-                                            value=20,
-                                            precision=0)
+                                            value=20,)
                 with gr.Row():
                     dilate_radius_number = gr.Slider(label='Mask dilation for video and flow masking.',
                                             minimum=0,
                                             maximum=10,
                                             step=1,
-                                            value=8,
-                                            precision=0)
+                                            value=8,)
 
                     subvideo_length_number = gr.Slider(label='Length of sub-video for long video inference.',
                                             minimum=40,
                                             maximum=200,
                                             step=1,
-                                            value=80,
-                                            precision=0)
+                                            value=80,)
                 with gr.Row():
                     neighbor_length_number = gr.Slider(label='Length of local neighboring frames.',
                                             minimum=5,
                                             maximum=20,
                                             step=1,
-                                            value=10,
-                                            precision=0)
+                                            value=10,)
                     
                     ref_stride_number = gr.Slider(label='Stride of global reference frames.',
                                             minimum=5,
                                             maximum=20,
                                             step=1,
-                                            value=10,
-                                            precision=0)
+                                            value=10,)
   
     with gr.Column():
         # input video
@@ -505,7 +501,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
         step2_title = gr.Markdown("---\n## Step2: Add masks", visible=False)
         with gr.Row(equal_height=True):
             with gr.Column(scale=2):
-                template_frame = gr.Image(type="pil",interactive=True, elem_id="template_frame", visible=False).style(height=300)
+                template_frame = gr.Image(type="pil",interactive=True, elem_id="template_frame", visible=False, elem_classes="image")
                 image_selection_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track start frame", visible=False)
                 track_pause_number_slider = gr.Slider(minimum=1, maximum=100, step=1, value=1, label="Track end frame", visible=False)
             with gr.Column(scale=2, elem_classes="jc_center"):
@@ -529,10 +525,10 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
         step3_title = gr.Markdown("---\n## Step3: Track masks and get the inpainting result", visible=False)
         with gr.Row(equal_height=True):
             with gr.Column(scale=2):
-                tracking_video_output = gr.Video(autosize=True, visible=False, elem_classes="video")
+                tracking_video_output = gr.Video(visible=False, elem_classes="video")
                 tracking_video_predict_button = gr.Button(value="1. Tracking", visible=False, elem_classes="margin_center")
             with gr.Column(scale=2):
-                inpaiting_video_output = gr.Video(autosize=True, visible=False, elem_classes="video")
+                inpaiting_video_output = gr.Video(visible=False, elem_classes="video")
                 inpaint_video_predict_button = gr.Button(value="2. Inpainting", visible=False, elem_classes="margin_center")
 
     # first step: get the video information 
@@ -642,4 +638,4 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=css) as iface:
     gr.Markdown(article)
 
 iface.queue(concurrency_count=1)
-iface.launch(enable_queue=True)
+iface.launch(debug=True)

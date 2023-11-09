@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from torchvision import transforms
 import torch.nn.functional as F
 from omegaconf import OmegaConf
 
@@ -11,7 +10,6 @@ from tracker.config import CONFIG
 from tracker.model.cutie import CUTIE
 from tracker.inference.inference_core import InferenceCore
 from tracker.utils.mask_mapper import MaskMapper
-from tracker.utils.range_transform import im_normalization
 
 from tools.painter import mask_painter
 
@@ -26,7 +24,7 @@ class BaseTracker:
 
         # initialise XMem
         network = CUTIE(config).to(device).eval()
-        model_weights = torch.load(cutie_checkpoint)
+        model_weights = torch.load(cutie_checkpoint, map_location=device)
         network.load_weights(model_weights)
 
         # initialise IncerenceCore
