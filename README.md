@@ -296,4 +296,6 @@ If you have any questions, please feel free to reach me out at `shangchenzhou@gm
 
 ## Acknowledgement
 
-This code is based on [E<sup>2</sup>FGVI](https://github.com/MCG-NKU/E2FGVI) and [STTN](https://github.com/researchmm/STTN). Some code are brought from [BasicVSR++](https://github.com/ckkelvinchan/BasicVSR_PlusPlus). Thanks for their awesome works.
+This code is based on [E<sup>2</sup>FGVI](https://github.com/MCG-NKU/E2FGVI) and [STTN](https://github.com/researchmm/STTN). Some code are brought from [BasicVSR++](https://github.com/ckkelvinchan/BasicVSR_PlusPlus). Thanks for their awesome works. 
+
+Special thanks to [Yihang Luo](https://github.com/Luo-Yihang) for his valuable contributions to build and maintain the Gradio demos for ProPainter.
