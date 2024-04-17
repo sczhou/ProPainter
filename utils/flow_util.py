@@ -6,15 +6,15 @@ import torch.nn.functional as F
 def resize_flow(flow, newh, neww):
     oldh, oldw = flow.shape[0:2]
     flow = cv2.resize(flow, (neww, newh), interpolation=cv2.INTER_LINEAR)
-    flow[:, :, 0] *= newh / oldh
-    flow[:, :, 1] *= neww / oldw
+    flow[:, :, 0] *= neww / oldw
+    flow[:, :, 1] *= newh / oldh
     return flow
 
 def resize_flow_pytorch(flow, newh, neww):
     oldh, oldw = flow.shape[-2:]
     flow = F.interpolate(flow, (newh, neww), mode='bilinear')
-    flow[:, :, 0] *= newh / oldh
-    flow[:, :, 1] *= neww / oldw
+    flow[:, :, 0] *= neww / oldw
+    flow[:, :, 1] *= newh / oldh
     return flow
 
 

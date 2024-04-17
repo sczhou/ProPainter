@@ -98,8 +98,8 @@ if __name__ == '__main__':
             flow_f = flow_f[0].permute(1,2,0).cpu().numpy()
             flow_b = flow_b[0].permute(1,2,0).cpu().numpy()
 
-            # flow_f = resize_flow(flow_f, w_new, h_new)
-            # flow_b = resize_flow(flow_b, w_new, h_new)
+            # flow_f = resize_flow(flow_f, h_new, w_new)
+            # flow_b = resize_flow(flow_b, h_new, w_new)
 
             save_flow_f = os.path.join(save_path, f, f'{m_list[i][:-4]}_{m_list[i+1][:-4]}_f.flo')
             save_flow_b = os.path.join(save_path, f, f'{m_list[i+1][:-4]}_{m_list[i][:-4]}_b.flo')
