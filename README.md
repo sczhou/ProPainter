@@ -315,7 +315,7 @@ If you develop or use ProPainter in your projects, feel free to let me know. Als
 - pytorchcv: https://pypi.org/project/pytorchcv
 
 ## Contact
-If you have any questions, please feel free to reach me out at `shangchenzhou@gmail.com`. 
+If you have any questions, please feel free to reach me out at shangchenzhou@gmail.com. 
 
 ## Acknowledgement
 
