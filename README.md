@@ -288,8 +288,31 @@ Please `--save_results` for further [evaluating temporal warping error](https://
 
 ## License
 
-This project is licensed under <a rel="license" href="./LICENSE">NTU S-Lab License 1.0</a>. Redistribution and use should follow this license.
+#### Non-Commercial Use Only Declaration
+The ProPainter is made available for use, reproduction, and distribution strictly for non-commercial purposes. The code and models are licensed under <a rel="license" href="./LICENSE">NTU S-Lab License 1.0</a>. Redistribution and use should follow this license.
 
+For inquiries or to obtain permission for commercial use, please consult Dr. Shangchen Zhou (shangchenzhou@gmail.com).
+
+
+## Projects that use ProPainter
+
+If you develop or use ProPainter in your projects, feel free to let me know. Also, please include this [ProPainter](https://github.com/sczhou/ProPainter) repo link, authorship information, and our [S-Lab license](https://github.com/sczhou/ProPainter/blob/main/LICENSE) (with link).
+
+#### Projects/Applications from the Community
+
+- Streaming ProPainter: https://github.com/osmr/propainter
+- Faster ProPainter: https://github.com/halfzm/faster-propainter
+- ProPainter WebUI: https://github.com/halfzm/ProPainter-Webui
+- ProPainter ComfyUI: https://github.com/daniabib/ComfyUI_ProPainter_Nodes
+- Cutie (video segmentation): https://github.com/hkchengrex/Cutie
+- Cinetransfer (character transfer): https://virtualfilmstudio.github.io/projects/cinetransfer
+- Motionshop (character transfer): https://aigc3d.github.io/motionshop
+
+
+
+#### PyPI
+- propainter: https://pypi.org/project/propainter
+- pytorchcv: https://pypi.org/project/pytorchcv
 
 ## Contact
 If you have any questions, please feel free to reach me out at `shangchenzhou@gmail.com`. 
