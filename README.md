@@ -2,7 +2,7 @@
 
 <div class="logo">
    <a href="https://shangchenzhou.com/projects/ProPainter/">
-      <img src="assets/propainter_logo1_glow.png" style="width:180px">
+      <img src="assets/propainter_logo1_glow.png" style="width: 180px">
    </a>
 </div>
 
@@ -163,6 +163,16 @@ If you want to specify the video resolution for processing or avoid running out 
 # process a 576x320 video; set --fp16 to use fp16 (half precision) during inference.
 python inference_propainter.py --video inputs/video_completion/running_car.mp4 --mask inputs/video_completion/mask_square.png --height 320 --width 576 --fp16
 ```
+
+#### 💃🏻 Interactive Demo
+
+We also provide an interactive demo for object removal, allowing users to select any object they wish to remove from a video. You can try the demo on [Hugging Face](https://huggingface.co/spaces/sczhou/ProPainter) or run it [locally](https://github.com/sczhou/ProPainter/tree/main/web-demos/hugging_face). 
+
+<div align="center">
+  <img src="./web-demos/hugging_face/assets/demo.gif" alt="Demo GIF" style="max-width: 512px; height: auto;">
+</div>
+
+*Please note that the demo's interface and usage may differ from the GIF animation above. For detailed instructions, refer to the [user guide](https://github.com/sczhou/ProPainter/blob/main/web-demos/hugging_face/README.md).*
 
 ### 🚀 Memory-efficient inference
 
