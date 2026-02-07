@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPainter - Video Inpainting</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>ProPainter</h1>
+        <p class="subtitle">Improving Propagation and Transformer for Video Inpainting</p>
+    </header>
+
+    <main>
+        <!-- Step 1: Upload Video -->
+        <section class="step" id="step1">
+            <div class="step-header">
+                <span class="step-number">1</span>
+                <h2>Upload Video</h2>
+            </div>
+            <div class="step-content">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-prompt" id="upload-prompt">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>Drop your video here or click to browse</p>
+                        <span class="upload-hint">Supports MP4, MOV, AVI</span>
+                    </div>
+                    <input type="file" id="video-input" accept="video/mp4,video/mov,video/avi,video/*" hidden>
+                </div>
+                <div class="video-info" id="video-info" style="display:none;">
+                    <div class="info-grid">
+                        <div class="info-item"><span class="info-label">File</span><span id="info-name">-</span></div>
+                        <div class="info-item"><span class="info-label">FPS</span><span id="info-fps">-</span></div>
+                        <div class="info-item"><span class="info-label">Frames</span><span id="info-frames">-</span></div>
+                        <div class="info-item"><span class="info-label">Resolution</span><span id="info-size">-</span></div>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-reset">Upload Different Video</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Add Masks -->
+        <section class="step disabled" id="step2">
+            <div class="step-header">
+                <span class="step-number">2</span>
+                <h2>Add Masks</h2>
+            </div>
+            <div class="step-content">
+                <div class="mask-workspace">
+                    <div class="canvas-container">
+                        <canvas id="frame-canvas"></canvas>
+                        <div class="canvas-overlay" id="canvas-overlay">
+                            <p>Upload a video to get started</p>
+                        </div>
+                    </div>
+
+                    <div class="mask-controls">
+                        <!-- Frame navigation -->
+                        <div class="control-group">
+                            <label>Start Frame</label>
+                            <div class="slider-row">
+                                <input type="range" id="start-frame-slider" min="0" max="100" value="0" disabled>
+                                <span id="start-frame-label" class="slider-value">0</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>End Frame</label>
+                            <div class="slider-row">
+                                <input type="range" id="end-frame-slider" min="0" max="100" value="100" disabled>
+                                <span id="end-frame-label" class="slider-value">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Click mode -->
+                        <div class="control-group">
+                            <label>Click Mode</label>
+                            <div class="toggle-group">
+                                <button class="toggle-btn active" id="btn-positive" disabled>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Positive
+                                </button>
+                                <button class="toggle-btn" id="btn-negative" disabled>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Negative
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mask actions -->
+                        <div class="control-group">
+                            <label>Mask Actions</label>
+                            <div class="button-stack">
+                                <button class="btn btn-success" id="btn-add-mask" disabled>Add Mask</button>
+                                <button class="btn btn-secondary" id="btn-clear-clicks" disabled>Clear Clicks</button>
+                                <button class="btn btn-danger" id="btn-remove-masks" disabled>Remove All Masks</button>
+                            </div>
+                        </div>
+
+                        <!-- Mask list -->
+                        <div class="control-group">
+                            <label>Active Masks</label>
+                            <div class="mask-list" id="mask-list">
+                                <span class="empty-state">No masks added</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Track & Inpaint -->
+        <section class="step disabled" id="step3">
+            <div class="step-header">
+                <span class="step-number">3</span>
+                <h2>Track & Inpaint</h2>
+            </div>
+            <div class="step-content">
+                <!-- Parameters -->
+                <details class="params-panel" id="params-panel">
+                    <summary>ProPainter Parameters</summary>
+                    <div class="params-grid">
+                        <div class="param-item">
+                            <label for="param-resize">Resize Ratio</label>
+                            <div class="slider-row">
+                                <input type="range" id="param-resize" min="0.01" max="1.0" step="0.01" value="1.0">
+                                <span class="slider-value" id="val-resize">1.00</span>
+                            </div>
+                        </div>
+                        <div class="param-item">
+                            <label for="param-dilate">Mask Dilation</label>
+                            <div class="slider-row">
+                                <input type="range" id="param-dilate" min="0" max="10" step="1" value="8">
+                                <span class="slider-value" id="val-dilate">8</span>
+                            </div>
+                        </div>
+                        <div class="param-item">
+                            <label for="param-raft">RAFT Iterations</label>
+                            <div class="slider-row">
+                                <input type="range" id="param-raft" min="5" max="20" step="1" value="20">
+                                <span class="slider-value" id="val-raft">20</span>
+                            </div>
+                        </div>
+                        <div class="param-item">
+                            <label for="param-subvideo">Sub-video Length</label>
+                            <div class="slider-row">
+                                <input type="range" id="param-subvideo" min="40" max="200" step="1" value="80">
+                                <span class="slider-value" id="val-subvideo">80</span>
+                            </div>
+                        </div>
+                        <div class="param-item">
+                            <label for="param-neighbor">Neighbor Length</label>
+                            <div class="slider-row">
+                                <input type="range" id="param-neighbor" min="5" max="20" step="1" value="10">
+                                <span class="slider-value" id="val-neighbor">10</span>
+                            </div>
+                        </div>
+                        <div class="param-item">
+                            <label for="param-stride">Ref Stride</label>
+                            <div class="slider-row">
+                                <input type="range" id="param-stride" min="5" max="20" step="1" value="10">
+                                <span class="slider-value" id="val-stride">10</span>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="action-row">
+                    <div class="action-card">
+                        <h3>Step 1: Track Objects</h3>
+                        <p>Track selected masks across all video frames using CUTIE.</p>
+                        <button class="btn btn-primary btn-lg" id="btn-track" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                            Track
+                        </button>
+                        <div class="result-video" id="track-result" style="display:none;">
+                            <video id="track-video" controls></video>
+                        </div>
+                    </div>
+                    <div class="action-card">
+                        <h3>Step 2: Inpaint Video</h3>
+                        <p>Remove tracked objects and fill with ProPainter.</p>
+                        <button class="btn btn-primary btn-lg" id="btn-inpaint" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                            Inpaint
+                        </button>
+                        <div class="result-video" id="inpaint-result" style="display:none;">
+                            <video id="inpaint-video" controls></video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Status bar -->
+        <div class="status-bar" id="status-bar">
+            <div class="status-message" id="status-message">Ready. Upload a video to begin.</div>
+            <div class="spinner" id="spinner" style="display:none;"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>
+            <a href="https://github.com/sczhou/ProPainter" target="_blank">ProPainter</a> &mdash;
+            Improving Propagation and Transformer for Video Inpainting (ICCV 2023)
+        </p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

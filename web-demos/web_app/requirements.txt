@@ -1,0 +1,11 @@
+flask
+numpy
+opencv-python
+torch>=1.7.1
+torchvision>=0.8.2
+Pillow
+psutil
+tqdm
+scipy
+pyyaml
+segment-anything @ git+https://github.com/facebookresearch/segment-anything.git
