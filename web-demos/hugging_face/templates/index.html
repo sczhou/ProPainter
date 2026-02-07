@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPainter - Video Inpainting</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo-group">
+                <h1>ProPainter</h1>
+                <span class="tagline">Improving Propagation and Transformer for Video Inpainting</span>
+            </div>
+            <a href="https://github.com/sczhou/ProPainter" target="_blank" class="github-link">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <!-- Progress Steps -->
+        <div class="stepper">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Upload Video</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Add Masks</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Track & Inpaint</div>
+            </div>
+        </div>
+
+        <!-- Notification Area -->
+        <div id="notification" class="notification hidden"></div>
+
+        <!-- Step 1: Upload Video -->
+        <section id="step1-panel" class="panel active-panel">
+            <div class="panel-header">
+                <h2>Upload Video</h2>
+                <p>Select a video file to begin. Supported formats: MP4, AVI, MOV, MKV.</p>
+            </div>
+            <div class="panel-body">
+                <div class="upload-zone" id="upload-zone">
+                    <input type="file" id="video-file" accept="video/*" hidden>
+                    <div class="upload-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="upload-text">Drag & drop your video here, or <span class="upload-browse">browse</span></p>
+                    <p class="upload-hint">Maximum recommended: 200 frames, 720p resolution</p>
+                </div>
+
+                <div id="video-preview-area" class="hidden">
+                    <div class="video-preview-container">
+                        <video id="video-preview" controls></video>
+                    </div>
+                    <div class="video-info-card" id="video-info-card">
+                        <div class="info-item">
+                            <span class="info-label">File</span>
+                            <span class="info-value" id="info-name">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Resolution</span>
+                            <span class="info-value" id="info-resolution">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">FPS</span>
+                            <span class="info-value" id="info-fps">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Frames</span>
+                            <span class="info-value" id="info-frames">-</span>
+                        </div>
+                    </div>
+                    <div class="action-row">
+                        <button id="btn-change-video" class="btn btn-secondary">Change Video</button>
+                        <button id="btn-to-step2" class="btn btn-primary">Continue to Masking</button>
+                    </div>
+                </div>
+
+                <!-- Loading overlay -->
+                <div id="upload-loading" class="loading-overlay hidden">
+                    <div class="spinner"></div>
+                    <p>Extracting frames and loading models...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Add Masks -->
+        <section id="step2-panel" class="panel">
+            <div class="panel-header">
+                <h2>Add Masks</h2>
+                <p>Click on objects in the frame to create masks. Use positive clicks to select and negative clicks to deselect regions.</p>
+            </div>
+            <div class="panel-body">
+                <div class="mask-workspace">
+                    <!-- Canvas area -->
+                    <div class="canvas-container">
+                        <canvas id="mask-canvas"></canvas>
+                        <div id="canvas-loading" class="canvas-loading hidden">
+                            <div class="spinner spinner-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- Controls sidebar -->
+                    <div class="mask-controls">
+                        <div class="control-group">
+                            <label>Start Frame</label>
+                            <div class="slider-row">
+                                <input type="range" id="start-frame-slider" min="0" max="100" value="0">
+                                <span id="start-frame-value" class="slider-value">1</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label>End Frame</label>
+                            <div class="slider-row">
+                                <input type="range" id="end-frame-slider" min="0" max="100" value="100">
+                                <span id="end-frame-value" class="slider-value">-</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Click Mode</label>
+                            <div class="toggle-group">
+                                <button id="btn-positive" class="toggle-btn active" data-mode="positive">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Include
+                                </button>
+                                <button id="btn-negative" class="toggle-btn" data-mode="negative">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Exclude
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Masks</label>
+                            <div id="mask-list" class="mask-list">
+                                <p class="mask-list-empty">No masks added yet</p>
+                            </div>
+                        </div>
+
+                        <div class="button-stack">
+                            <button id="btn-add-mask" class="btn btn-success btn-full">Add Mask</button>
+                            <button id="btn-clear-clicks" class="btn btn-secondary btn-full">Clear Clicks</button>
+                            <button id="btn-remove-masks" class="btn btn-danger btn-full">Remove All Masks</button>
+                        </div>
+
+                        <div class="action-row" style="margin-top: auto;">
+                            <button id="btn-back-step1" class="btn btn-secondary">Back</button>
+                            <button id="btn-to-step3" class="btn btn-primary">Continue to Processing</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Track & Inpaint -->
+        <section id="step3-panel" class="panel">
+            <div class="panel-header">
+                <h2>Track & Inpaint</h2>
+                <p>First track the masks through the video, then run inpainting to remove the selected objects.</p>
+            </div>
+            <div class="panel-body">
+                <!-- Advanced Settings -->
+                <details class="settings-accordion">
+                    <summary>Advanced Settings</summary>
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label for="setting-resize">Resize Ratio</label>
+                            <input type="range" id="setting-resize" min="0.01" max="1" step="0.01" value="1">
+                            <span class="setting-value" id="val-resize">1.00</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="setting-raft-iter">RAFT Iterations</label>
+                            <input type="range" id="setting-raft-iter" min="5" max="20" step="1" value="20">
+                            <span class="setting-value" id="val-raft-iter">20</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="setting-dilate">Mask Dilation</label>
+                            <input type="range" id="setting-dilate" min="0" max="10" step="1" value="8">
+                            <span class="setting-value" id="val-dilate">8</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="setting-subvideo">Sub-video Length</label>
+                            <input type="range" id="setting-subvideo" min="40" max="200" step="1" value="80">
+                            <span class="setting-value" id="val-subvideo">80</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="setting-neighbor">Neighbor Length</label>
+                            <input type="range" id="setting-neighbor" min="5" max="20" step="1" value="10">
+                            <span class="setting-value" id="val-neighbor">10</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="setting-ref-stride">Reference Stride</label>
+                            <input type="range" id="setting-ref-stride" min="5" max="20" step="1" value="10">
+                            <span class="setting-value" id="val-ref-stride">10</span>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Mask selection for step 3 -->
+                <div class="control-group" id="step3-mask-select-group">
+                    <label>Masks to process</label>
+                    <div id="step3-mask-checkboxes" class="mask-checkboxes"></div>
+                </div>
+
+                <!-- Processing actions -->
+                <div class="process-row">
+                    <div class="process-card">
+                        <h3>Step A: Tracking</h3>
+                        <p>Propagate masks through all video frames using CUTIE tracker.</p>
+                        <button id="btn-track" class="btn btn-primary btn-full">Run Tracking</button>
+                        <div id="tracking-progress" class="progress-bar hidden">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="process-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </div>
+                    <div class="process-card">
+                        <h3>Step B: Inpainting</h3>
+                        <p>Remove masked objects and fill in the background using ProPainter.</p>
+                        <button id="btn-inpaint" class="btn btn-primary btn-full" disabled>Run Inpainting</button>
+                        <div id="inpaint-progress" class="progress-bar hidden">
+                            <div class="progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="results-area" class="results-area hidden">
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h3>Tracking Result</h3>
+                            <video id="tracking-video" controls></video>
+                        </div>
+                        <div class="result-card">
+                            <h3>Inpainting Result</h3>
+                            <video id="inpainting-video" controls></video>
+                            <a id="btn-download" class="btn btn-success btn-full" style="margin-top: 12px; text-align: center; display: none;">Download Result</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-row" style="margin-top: 24px;">
+                    <button id="btn-back-step2" class="btn btn-secondary">Back</button>
+                    <button id="btn-restart" class="btn btn-danger">Start Over</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>
+            ProPainter &mdash; ICCV 2023 |
+            <a href="https://github.com/sczhou/ProPainter" target="_blank">Paper & Code</a>
+        </p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
