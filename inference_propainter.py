@@ -433,7 +433,6 @@ if __name__ == '__main__':
             pred_img = model(selected_imgs, selected_pred_flows_bi, selected_masks, selected_update_masks, l_t)
             
             pred_img = pred_img.view(-1, 3, h, w)
-
             pred_img = (pred_img + 1) / 2
             pred_img = pred_img.cpu().permute(0, 2, 3, 1).numpy() * 255
             binary_masks = masks_dilated[0, neighbor_ids, :, :, :].cpu().permute(
@@ -456,7 +455,7 @@ if __name__ == '__main__':
         for idx in range(video_length):
             f = comp_frames[idx]
             f = cv2.resize(f, out_size, interpolation = cv2.INTER_CUBIC)
-            f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+            # f = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)  # patched: tensor already RGB with torch 2.5
             img_save_root = os.path.join(save_root, 'frames', str(idx).zfill(4)+'.png')
             imwrite(f, img_save_root)
                     
@@ -468,8 +467,20 @@ if __name__ == '__main__':
     # save videos frame
     masked_frame_for_save = [cv2.resize(f, out_size) for f in masked_frame_for_save]
     comp_frames = [cv2.resize(f, out_size) for f in comp_frames]
-    imageio.mimwrite(os.path.join(save_root, 'masked_in.mp4'), masked_frame_for_save, fps=fps, quality=7)
-    imageio.mimwrite(os.path.join(save_root, 'inpaint_out.mp4'), comp_frames, fps=fps, quality=7)
+    import subprocess as _sp, numpy as _np
+    def _write_mp4(frames, fpath, fps):
+        h, w = frames[0].shape[:2]
+        cmd = ['ffmpeg', '-y', '-f', 'rawvideo', '-vcodec', 'rawvideo',
+               '-s', f'{w}x{h}', '-pix_fmt', 'rgb24', '-r', str(fps or 24),
+               '-i', 'pipe:0', '-vcodec', 'libx264', '-pix_fmt', 'yuv420p',
+               '-crf', '18', '-preset', 'fast', fpath]
+        p = _sp.Popen(cmd, stdin=_sp.PIPE, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        for f in frames:
+            p.stdin.write(f.astype(_np.uint8).tobytes())
+        p.stdin.close()
+        p.wait()
+    _write_mp4(masked_frame_for_save, os.path.join(save_root, 'masked_in.mp4'), fps)
+    _write_mp4(comp_frames, os.path.join(save_root, 'inpaint_out.mp4'), fps)
     
     print(f'\nAll results are saved in {save_root}')
     
