@@ -180,7 +180,7 @@ class BidirectionalPropagation(nn.Module):
         if self.learnable:
             mask_in = mask.view(-1, 2, h, w)
             masks_b, masks_f = None, None
-            outputs = self.fuse(torch.cat([outputs_b, outputs_f, mask_in], dim=1)) + x.view(-1, c, h, w)
+            outputs = self.fuse(torch.cat([outputs_b, outputs_f, mask_in], dim=1)) + x.reshape(-1, c, h, w)
         else:
             masks_b = torch.stack(masks['backward_1'], dim=1)
             masks_f = torch.stack(masks['forward_1'], dim=1)

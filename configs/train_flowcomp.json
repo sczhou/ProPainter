@@ -20,7 +20,7 @@
     "trainer": {
         "version": "trainer_flow_w_edge",
         "type": "Adam",
-        "beta1": 0,
+        "beta1": 0.0,
         "beta2": 0.99,
         "lr": 5e-5,
         "batch_size": 8,
