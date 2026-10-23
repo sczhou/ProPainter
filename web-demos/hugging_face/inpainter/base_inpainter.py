@@ -10,10 +10,10 @@ from tqdm import tqdm
 import torch
 import torchvision
 
-from model.modules.flow_comp_raft import RAFT_bi
-from model.recurrent_flow_completion import RecurrentFlowCompleteNet
-from model.propainter import InpaintGenerator
-from core.utils import to_tensors
+from propainter.model.modules.flow_comp_raft import RAFT_bi
+from propainter.model.recurrent_flow_completion import RecurrentFlowCompleteNet
+from propainter.model.propainter import InpaintGenerator
+from propainter.core.utils import to_tensors
 
 import warnings
 warnings.filterwarnings("ignore")

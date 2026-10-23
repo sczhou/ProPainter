@@ -12,13 +12,13 @@ import torch.nn.functional as F
 import torch
 from torch.utils.data import DataLoader
 
-from model.modules.flow_comp_raft import RAFT_bi
-from model.recurrent_flow_completion import RecurrentFlowCompleteNet
-from model.propainter import InpaintGenerator
+from propainter.model.modules.flow_comp_raft import RAFT_bi
+from propainter.model.recurrent_flow_completion import RecurrentFlowCompleteNet
+from propainter.model.propainter import InpaintGenerator
 
 # from core.dataset import TestDataset
-from core.dataset import TestDataset
-from core.metrics import calc_psnr_and_ssim, calculate_i3d_activations, calculate_vfid, init_i3d_model
+from propainter.core.dataset import TestDataset
+from propainter.core.metrics import calc_psnr_and_ssim, calculate_i3d_activations, calculate_vfid, init_i3d_model
 
 from time import time
 

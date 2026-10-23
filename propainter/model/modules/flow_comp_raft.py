@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from RAFT import RAFT
-from model.modules.flow_loss_utils import flow_warp, ternary_loss2
+from propainter.RAFT import RAFT
+from propainter.model.modules.flow_loss_utils import flow_warp, ternary_loss2
 
 
 def initialize_RAFT(model_path='weights/raft-things.pth', device='cuda'):
