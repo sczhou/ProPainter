@@ -9,15 +9,15 @@ import torch.distributed as dist
 import torch
 import torch.multiprocessing as mp
 
-import core
-import core.trainer
-import core.trainer_flow_w_edge
+import propainter.core
+import propainter.core.trainer
+import propainter.core.trainer_flow_w_edge
 
 
 # import warnings
 # warnings.filterwarnings("ignore")
 
-from core.dist import (
+from propainter.core.dist import (
     get_world_size,
     get_local_rank,
     get_global_rank,
@@ -71,7 +71,7 @@ def main_worker(rank, config):
         print('[**] create folder {}'.format(config['save_dir']))
 
     trainer_version = config['trainer']['version']
-    trainer = core.__dict__[trainer_version].__dict__['Trainer'](config)
+    trainer = propainter.core.__dict__[trainer_version].__dict__['Trainer'](config)
     # Trainer(config)
     trainer.train()
 

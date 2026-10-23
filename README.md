@@ -107,6 +107,23 @@
 ![overall_structure](assets/ProPainter_pipeline.png)
 
 
+## Install as a package (pip / uv)
+
+This fork packages the inference code as `propainter` (`model`, `core`, `utils` and `RAFT` live under
+`propainter/`, so they no longer occupy those generic top-level names):
+
+```shell
+pip install "propainter @ git+https://github.com/ike-taku/ProPainter@feature/support-uv"
+# or in a uv project:  uv add "propainter @ git+https://github.com/ike-taku/ProPainter@feature/support-uv"
+
+propainter-inference --video <frames_or_mp4> --mask <mask_dir> --output <out_dir>
+# same as: python -m propainter.inference ...   (and, from a checkout, python inference_propainter.py ...)
+```
+
+Pretrained weights are downloaded on first use to `--weights_dir`, else `$PROPAINTER_WEIGHTS_DIR`,
+else `./weights` when that directory exists (running from a checkout), else `~/.cache/propainter/weights`.
+Training / evaluation extras: `pip install "propainter[train] @ git+..."`.
+
 ## Dependencies and Installation
 
 1. Clone Repo

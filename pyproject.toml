@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "propainter"
+version = "0.1.0"
+description = "ProPainter: Improving Propagation and Transformer for Video Inpainting (ICCV 2023), packaged for pip/uv"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+# Inference only. Training / evaluation / demo extras are in [train].
+dependencies = [
+    "torch>=1.7.1",
+    "torchvision>=0.8.2",
+    "numpy",
+    "scipy",
+    # headless: inference only writes images, and the GUI build clashes with
+    # opencv-python-headless in environments that already use it
+    "opencv-python-headless",
+    "pillow",
+    "tqdm",
+    "requests",
+    "einops",
+    "matplotlib",
+    "imageio",
+    "imageio-ffmpeg",
+    "av",  # torchvision.io.read_video for .mp4 inputs
+]
+
+[project.optional-dependencies]
+train = ["scikit-image", "addict", "future", "pyyaml", "timm", "yapf", "tensorboard"]
+
+[project.scripts]
+propainter-inference = "propainter.inference:main"
+
+[project.urls]
+Homepage = "https://github.com/sczhou/ProPainter"
+
+[tool.setuptools.packages.find]
+include = ["propainter*"]

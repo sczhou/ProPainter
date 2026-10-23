@@ -9,10 +9,10 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-from utils.file_client import FileClient
-from utils.img_util import imfrombytes
-from utils.flow_util import resize_flow, flowread
-from core.utils import (create_random_shape_with_random_motion, Stack,
+from propainter.utils.file_client import FileClient
+from propainter.utils.img_util import imfrombytes
+from propainter.utils.flow_util import resize_flow, flowread
+from propainter.core.utils import (create_random_shape_with_random_motion, Stack,
                         ToTorchFormatTensor, GroupRandomHorizontalFlip,GroupRandomHorizontalFlowFlip)
 
 

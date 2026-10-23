@@ -7,20 +7,20 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from core.prefetch_dataloader import PrefetchDataLoader, CPUPrefetcher
+from propainter.core.prefetch_dataloader import PrefetchDataLoader, CPUPrefetcher
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from torch.utils.tensorboard import SummaryWriter
 
-from core.lr_scheduler import MultiStepRestartLR, CosineAnnealingRestartLR
-from core.dataset import TrainDataset
+from propainter.core.lr_scheduler import MultiStepRestartLR, CosineAnnealingRestartLR
+from propainter.core.dataset import TrainDataset
 
-from model.modules.flow_comp_raft import RAFT_bi, FlowLoss, EdgeLoss
+from propainter.model.modules.flow_comp_raft import RAFT_bi, FlowLoss, EdgeLoss
 
 # from skimage.feature import canny
-from model.canny.canny_filter import Canny
-from RAFT.utils.flow_viz_pt import flow_to_image
+from propainter.model.canny.canny_filter import Canny
+from propainter.RAFT.utils.flow_viz_pt import flow_to_image
 
 
 class Trainer:

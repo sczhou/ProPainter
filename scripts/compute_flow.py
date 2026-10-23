@@ -10,8 +10,8 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms
 
-from RAFT import RAFT
-from utils.flow_util import *
+from propainter.RAFT import RAFT
+from propainter.utils.flow_util import *
 
 def imwrite(img, file_path, params=None, auto_mkdir=True):
     if auto_mkdir:
