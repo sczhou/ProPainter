@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 from fractions import Fraction
 from types import SimpleNamespace
@@ -8,27 +9,36 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(HERE))
 
-import os
 import time
 import argparse
 
-os.environ.setdefault("HF_HOME", str(ROOT / ".cache" / "huggingface"))
+def startup_log(message):
+    print(f"[Startup] {message}", flush=True)
+
+
+startup_log("Starting ProPainter demo")
+# HF's build-time preloader uses the standard Hub cache. Keep that cache on
+# Spaces; use a repository-local cache only for local runs.
+if not os.environ.get("SPACE_ID"):
+    os.environ.setdefault("HF_HOME", str(ROOT / ".cache" / "huggingface"))
 os.environ.setdefault("MPLCONFIGDIR", str(ROOT / ".cache" / "matplotlib"))
 os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 import certifi
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 
-import cv2
-import torch
-import numpy as np
-import gradio as gr
 # Keep HF ZeroGPU support without requiring the Spaces SDK on local machines.
 if os.environ.get("SPACES_ZERO_GPU"):
+    startup_log("Initializing ZeroGPU SDK")
     import spaces
 else:
     def _local_gpu(fn=None, **kwargs):
         return fn if fn is not None else lambda callback: callback
     spaces = SimpleNamespace(GPU=_local_gpu)
+startup_log("Importing OpenCV, PyTorch and Gradio")
+import cv2
+import torch
+import numpy as np
+import gradio as gr
 import av
 
 from tools.painter import mask_painter, point_painter
@@ -37,19 +47,27 @@ from sam2_segmenter import SAM2Segmenter, SAM2_MODELS
 from model.misc import get_device
 from utils.download_util import download_url_to_file
 
+startup_log("Dependencies imported")
+
+
+def download_example(url, path):
+    startup_log(f"Downloading example {Path(path).name}")
+    download_url_to_file(url, path)
+    startup_log(f"Example ready: {Path(path).name}")
+
 # make sample videos into mp4 as git does not allow mp4 without lfs
 sample_videos_path = str(HERE / "test_sample")
 os.makedirs(sample_videos_path, exist_ok=True)
 if not os.path.exists(os.path.join(sample_videos_path, "test-sample0.mp4")):
-    download_url_to_file("https://github-production-user-asset-6210df.s3.amazonaws.com/14334509/281805130-e57c7016-5a6d-4d3b-9df9-b4ea6372cc87.mp4", os.path.join(sample_videos_path, "test-sample0.mp4"))
+    download_example("https://github-production-user-asset-6210df.s3.amazonaws.com/14334509/281805130-e57c7016-5a6d-4d3b-9df9-b4ea6372cc87.mp4", os.path.join(sample_videos_path, "test-sample0.mp4"))
 if not os.path.exists(os.path.join(sample_videos_path, "test-sample1.mp4")):
-    download_url_to_file("https://github-production-user-asset-6210df.s3.amazonaws.com/14334509/281828039-5def0fc9-3a22-45b7-838d-6bf78b6772c3.mp4", os.path.join(sample_videos_path, "test-sample1.mp4"))
+    download_example("https://github-production-user-asset-6210df.s3.amazonaws.com/14334509/281828039-5def0fc9-3a22-45b7-838d-6bf78b6772c3.mp4", os.path.join(sample_videos_path, "test-sample1.mp4"))
 if not os.path.exists(os.path.join(sample_videos_path, "test-sample2.mp4")):
-    download_url_to_file("https://github-production-user-asset-6210df.s3.amazonaws.com/76810782/281807801-69b9f70c-1e56-428d-9b1b-4870c5e533a7.mp4", os.path.join(sample_videos_path, "test-sample2.mp4"))
+    download_example("https://github-production-user-asset-6210df.s3.amazonaws.com/76810782/281807801-69b9f70c-1e56-428d-9b1b-4870c5e533a7.mp4", os.path.join(sample_videos_path, "test-sample2.mp4"))
 if not os.path.exists(os.path.join(sample_videos_path, "test-sample3.mp4")):
-    download_url_to_file("https://github-production-user-asset-6210df.s3.amazonaws.com/76810782/281808625-ad98f03f-99c7-4008-acf1-3d7beb48f13b.mp4", os.path.join(sample_videos_path, "test-sample3.mp4"))
+    download_example("https://github-production-user-asset-6210df.s3.amazonaws.com/76810782/281808625-ad98f03f-99c7-4008-acf1-3d7beb48f13b.mp4", os.path.join(sample_videos_path, "test-sample3.mp4"))
 if not os.path.exists(os.path.join(sample_videos_path, "test-sample4.mp4")):
-    download_url_to_file("https://github-production-user-asset-6210df.s3.amazonaws.com/14334509/281828066-ee09ae82-916f-4a2e-a6c7-6fc50645fd20.mp4", os.path.join(sample_videos_path, "test-sample4.mp4"))
+    download_example("https://github-production-user-asset-6210df.s3.amazonaws.com/14334509/281828066-ee09ae82-916f-4a2e-a6c7-6fc50645fd20.mp4", os.path.join(sample_videos_path, "test-sample4.mp4"))
 
 
 def parse_augment():
@@ -356,6 +374,7 @@ def restart():
 
 
 args = parse_augment()
+startup_log(f"Selected device: {args.device}; default SAM2.1 variant: {args.sam2_model}")
 model = SAM2Segmenter(device=args.device, sam2_model=args.sam2_model)
 if model.device.type == "cpu":
     torch.set_num_threads(min(8, os.cpu_count() or 1))
@@ -583,7 +602,10 @@ if __name__ == "__main__":
     # Cache every offered checkpoint before serving. Model construction remains
     # lazy, with only the selected variant loaded for inference.
     for variant in SAM2_MODELS:
-        model.ensure_checkpoint(variant)
+        startup_log(f"Preparing SAM2.1 {variant} checkpoint")
+        path = model.ensure_checkpoint(variant)
+        startup_log(f"SAM2.1 {variant} checkpoint ready: {path}")
+    startup_log(f"Launching Gradio on {args.host}:{args.port}")
     iface.launch(debug=True, server_name=args.host, server_port=args.port,
                  theme=gr.themes.Monochrome(), css=css,
                  allowed_paths=[str(ROOT / "results"), str(HERE / "test_sample")])

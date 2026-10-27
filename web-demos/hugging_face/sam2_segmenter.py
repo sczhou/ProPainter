@@ -64,9 +64,16 @@ class SAM2Segmenter:
         checkpoint = self.weights_dir / "sam2" / filename
         if checkpoint.is_file() and checkpoint.stat().st_size > 0:
             return str(checkpoint)
-        from huggingface_hub import hf_hub_download
+        from huggingface_hub import hf_hub_download, try_to_load_from_cache
+        repo_id = f"facebook/sam2.1-hiera-{name.replace('_', '-')}"
+        # Spaces preloads files into the standard Hub cache during image build.
+        # Reuse those files directly, including when HF_HOME was customized.
+        for cache_dir in (None, str(Path.home() / ".cache" / "huggingface" / "hub")):
+            cached = try_to_load_from_cache(repo_id=repo_id, filename=filename, cache_dir=cache_dir)
+            if isinstance(cached, str) and Path(cached).is_file():
+                return cached
         return hf_hub_download(
-            repo_id=f"facebook/sam2.1-hiera-{name.replace('_', '-')}",
+            repo_id=repo_id,
             filename=filename, local_dir=self.weights_dir / "sam2",
         )
 

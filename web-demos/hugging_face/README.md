@@ -39,6 +39,9 @@ controller. MatAnyone's default click model is SAM1 ViT-H; this demo keeps SAM2
 and does not load SAM1 or a matting model. Use `--device cuda` on a CUDA machine.
 At startup all three checkpoints (Small, Base+, and Large) are downloaded to disk
 before the demo starts serving. No SAM2 network is constructed at startup.
+On Hugging Face Spaces, `preload_from_hub` downloads these checkpoints during the
+image build instead; startup reads the standard Hub cache without downloading
+them again. Startup stages are written immediately to the container logs.
 Changing the dropdown only selects a variant; only that variant is loaded into
 memory on the first click/inference. No download progress bar is added to the
 dropdown. Missing checkpoint recovery downloads run before the ZeroGPU worker
