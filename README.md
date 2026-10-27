@@ -54,6 +54,7 @@
 
 
 ## Update
+- **2026.10.27**: Our [Hugging Face demo](https://huggingface.co/spaces/sczhou/ProPainter) now supports SAM 2.1 for interactive video segmentation. Try the updated demo! 🤗
 - **2023.11.09**: Integrated to :man_artist: [OpenXLab](https://openxlab.org.cn/apps). Try out online demo! [![OpenXLab](https://img.shields.io/badge/Demo-%F0%9F%91%A8%E2%80%8D%F0%9F%8E%A8%20OpenXLab-blue)](https://openxlab.org.cn/apps/detail/ShangchenZhou/ProPainter)
 - **2023.11.09**: Integrated to :hugs: [Hugging Face](https://huggingface.co/spaces). Try out online demo! [![Hugging Face](https://img.shields.io/badge/Demo-%F0%9F%A4%97%20Hugging%20Face-blue)](https://huggingface.co/spaces/sczhou/ProPainter)
 - **2023.09.24**: We remove the watermark removal demos officially to prevent the misuse of our work for unethical purposes.

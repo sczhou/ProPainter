@@ -1,16 +1,18 @@
-progressbar2
-gdown
-gitpython
-git+https://github.com/cheind/py-thin-plate-spline
-hickle
-tensorboard
-numpy
-git+https://github.com/facebookresearch/segment-anything.git
-gradio
-opencv-python
-matplotlib
-pyyaml
-av
-openmim
-tqdm
-psutil
+# Python 3.10+; tested with Python 3.11 on macOS arm64.
+torch==2.8.0
+torchvision==0.23.0
+gradio==6.9.0
+huggingface-hub>=0.34,<2
+numpy>=1.26,<3
+opencv-python>=4.10,<5
+av>=14,<17
+Pillow>=10.4
+scipy>=1.13
+matplotlib>=3.9
+einops>=0.7
+tqdm>=4.66
+requests>=2.32
+certifi>=2024.7
+hydra-core>=1.3.2
+iopath>=0.1.10
+SAM-2 @ git+https://github.com/facebookresearch/sam2.git@2b90b9f5ceec907a1c18123530e92e794ad901a4

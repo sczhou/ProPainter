@@ -29,11 +29,12 @@ def imwrite(img, file_path, params=None, auto_mkdir=True):
 def resize_frames(frames, size=None):    
 	if size is not None:
 		out_size = size
-		process_size = (out_size[0]-out_size[0]%8, out_size[1]-out_size[1]%8)
+		# RAFT's four-level correlation pyramid requires at least 128 pixels.
+		process_size = (max(128, out_size[0]-out_size[0]%8), max(128, out_size[1]-out_size[1]%8))
 		frames = [f.resize(process_size) for f in frames]
 	else:
 		out_size = frames[0].size
-		process_size = (out_size[0]-out_size[0]%8, out_size[1]-out_size[1]%8)
+		process_size = (max(128, out_size[0]-out_size[0]%8), max(128, out_size[1]-out_size[1]%8))
 		if not out_size == process_size:
 			frames = [f.resize(process_size) for f in frames]
 		
@@ -162,10 +163,8 @@ def read_mask_demo(masks, length, size, flow_mask_dilates=8, mask_dilates=5):
 
 class ProInpainter:
 	def __init__(self, propainter_checkpoint, raft_checkpoint, flow_completion_checkpoint, device="cuda:0", use_half=True):
-		self.device = device
-		self.use_half = use_half
-		if self.device == torch.device('cpu'):
-					self.use_half = False
+		self.device = torch.device(device)
+		self.use_half = use_half and self.device.type == 'cuda'
 
 		##############################################
 		# set up RAFT and flow competition model
@@ -188,7 +187,7 @@ class ProInpainter:
 			self.fix_flow_complete = self.fix_flow_complete.half()
 			self.model = self.model.half()
 
-	def inpaint(self, npframes, masks, ratio=1.0, dilate_radius=4, raft_iter=20, subvideo_length=80, neighbor_length=10, ref_stride=10):
+	def inpaint(self, npframes, masks, ratio=1.0, dilate_radius=4, raft_iter=20, subvideo_length=80, neighbor_length=10, ref_stride=10, progress_callback=None):
 		"""
 		Perform Inpainting for video subsets
 		
@@ -196,6 +195,12 @@ class ProInpainter:
 		inpainted_frames: numpy array, T, H, W, 3
 		"""
 		
+		def report(stage, completed, total):
+			if progress_callback is not None:
+				progress_callback(completed, total, f"{stage} — frame {completed}/{total}")
+
+		if progress_callback is not None:
+			progress_callback(0, len(npframes), "Preparing inpainting frames")
 		frames = []
 		for i in range(len(npframes)):
 			frames.append(Image.fromarray(npframes[i].astype('uint8'), mode="RGB"))
@@ -203,7 +208,13 @@ class ProInpainter:
 
 		size = frames[0].size
 		# The ouput size should be divided by 2 so that it can encoded by libx264
-		size = (int(ratio*size[0])//2*2, int(ratio*size[1])//2*2)
+		size = (max(2, int(ratio*size[0])//2*2), max(2, int(ratio*size[1])//2*2))
+
+		# set propainter size limit to 720 to reduce memory usage
+		if max(size[0], size[1]) > 720:
+			scale = 720.0 / max(size[0], size[1])
+			# The ouput size should be divided by 2 so that it can encoded by libx264
+			size = (int(scale*size[0])//2*2, int(scale*size[1])//2*2)
 
 		frames_len = len(frames)
 		frames, size, out_size = resize_frames(frames, size)
@@ -232,6 +243,7 @@ class ProInpainter:
 				short_clip_len = 2
 			
 			# use fp32 for RAFT
+			report("[stage 1/3] Optical flow", 0, video_length)
 			if frames.size(1) > short_clip_len:
 				gt_flows_f_list, gt_flows_b_list = [], []
 				for f in range(0, video_length, short_clip_len):
@@ -244,6 +256,7 @@ class ProInpainter:
 					gt_flows_f_list.append(flows_f)
 					gt_flows_b_list.append(flows_b)
 					torch.cuda.empty_cache()
+					report("[stage 1/3] Optical flow", end_f, video_length)
 					
 				gt_flows_f = torch.cat(gt_flows_f_list, dim=1)
 				gt_flows_b = torch.cat(gt_flows_b_list, dim=1)
@@ -251,6 +264,7 @@ class ProInpainter:
 			else:
 				gt_flows_bi = self.fix_raft(frames, iters=raft_iter)
 				torch.cuda.empty_cache()
+				report("[stage 1/3] Optical flow", video_length, video_length)
 
 			if self.use_half:
 				frames, flow_masks, masks_dilated = frames.half(), flow_masks.half(), masks_dilated.half()
@@ -258,6 +272,7 @@ class ProInpainter:
 
 			# ---- complete flow ----
 			flow_length = gt_flows_bi[0].size(1)
+			report("[stage 2/3] Flow completion", 0, video_length)
 			if flow_length > subvideo_length:
 				pred_flows_f, pred_flows_b = [], []
 				pad_len = 5
@@ -277,6 +292,7 @@ class ProInpainter:
 					pred_flows_f.append(pred_flows_bi_sub[0][:, pad_len_s:e_f-s_f-pad_len_e])
 					pred_flows_b.append(pred_flows_bi_sub[1][:, pad_len_s:e_f-s_f-pad_len_e])
 					torch.cuda.empty_cache()
+					report("[stage 2/3] Flow completion", min(flow_length, f + subvideo_length) + 1, video_length)
 					
 				pred_flows_f = torch.cat(pred_flows_f, dim=1)
 				pred_flows_b = torch.cat(pred_flows_b, dim=1)
@@ -285,10 +301,13 @@ class ProInpainter:
 				pred_flows_bi, _ = self.fix_flow_complete.forward_bidirect_flow(gt_flows_bi, flow_masks)
 				pred_flows_bi = self.fix_flow_complete.combine_flow(gt_flows_bi, pred_flows_bi, flow_masks)
 				torch.cuda.empty_cache()
+				report("[stage 2/3] Flow completion", video_length, video_length)
 				
 			# ---- image propagation ----
 			masked_frames = frames * (1 - masks_dilated)
 			subvideo_length_img_prop = min(100, subvideo_length) # ensure a minimum of 100 frames for image propagation
+			# Image propagation is part of the inpainting stage in the UI.
+			report("[stage 3/3] Inpainting", 0, video_length)
 			if video_length > subvideo_length_img_prop:
 				updated_frames, updated_masks = [], []
 				pad_len = 10
@@ -367,6 +386,10 @@ class ProInpainter:
 					comp_frames[idx] = comp_frames[idx].astype(np.uint8)
 			
 			torch.cuda.empty_cache()
+			# Later overlapping windows can still refine frames from f onward.
+			# Count only finalized frames, so 100% is reached after the last window.
+			completed_frames = video_length if f + neighbor_stride >= video_length else f
+			report("[stage 3/3] Inpainting", completed_frames, video_length)
 
 		# need to return numpy array, T, H, W, 3
 		comp_frames = [cv2.resize(f, out_size) for f in comp_frames]
