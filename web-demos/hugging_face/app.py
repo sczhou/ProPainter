@@ -188,7 +188,7 @@ def get_end_number(number, interactive_state):
     return interactive_state
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=60)
 def _sam_refine_gpu(frame, click_state, click_index, is_positive, sam2_model="small"):
     # MatAnyone returns click history explicitly across the GPU worker boundary.
     points = [list(point) for point in click_state[0]] + [list(map(int, click_index))]
@@ -269,7 +269,7 @@ def remove_multi_mask(video_state, interactive_state, mask_dropdown):
     return video_state, interactive_state, gr.update(choices=[], value=[]), frame, [[], []], None, None, gr.update(value=None, interactive=False)
 
 
-@spaces.GPU(duration=300)
+@spaces.GPU(duration=120)
 def segment_video(video_state, interactive_state, mask_dropdown, progress=gr.Progress()):
     require_video(video_state)
     frames = video_state["origin_images"]
@@ -310,7 +310,7 @@ def clear_inpainting_result():
     return None, gr.update(value=None, interactive=False)
 
 
-@spaces.GPU(duration=420)
+@spaces.GPU(duration=120)
 def inpaint_video(video_state, ratio, dilation, raft_iters, subvideo, neighbors, stride, mask_dropdown, progress=gr.Progress()):
     require_video(video_state)
     if "track_range" not in video_state:
