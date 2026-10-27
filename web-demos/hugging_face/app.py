@@ -269,7 +269,7 @@ def remove_multi_mask(video_state, interactive_state, mask_dropdown):
     return video_state, interactive_state, gr.update(choices=[], value=[]), frame, [[], []], None, None, gr.update(value=None, interactive=False)
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=300)
 def segment_video(video_state, interactive_state, mask_dropdown, progress=gr.Progress()):
     require_video(video_state)
     frames = video_state["origin_images"]
@@ -310,7 +310,7 @@ def clear_inpainting_result():
     return None, gr.update(value=None, interactive=False)
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=300)
 def inpaint_video(video_state, ratio, dilation, raft_iters, subvideo, neighbors, stride, mask_dropdown, progress=gr.Progress()):
     require_video(video_state)
     if "track_range" not in video_state:
