@@ -38,19 +38,24 @@ class RAFT_bi(nn.Module):
 
     def forward(self, gt_local_frames, iters=20):
         b, l_t, c, h, w = gt_local_frames.size()
-        # print(gt_local_frames.shape)
+        # RAFT downsamples by eight and builds a four-level correlation pyramid.
+        # Keep its coarsest level at least 2 x 2 for pixel-coordinate normalization.
+        padded_h = max(128, ((h + 7) // 8) * 8)
+        padded_w = max(128, ((w + 7) // 8) * 8)
 
         with torch.no_grad():
-            gtlf_1 = gt_local_frames[:, :-1, :, :, :].reshape(-1, c, h, w)
-            gtlf_2 = gt_local_frames[:, 1:, :, :, :].reshape(-1, c, h, w)
-            # print(gtlf_1.shape)
+            gtlf_1 = gt_local_frames[:, :-1].reshape(-1, c, h, w)
+            gtlf_2 = gt_local_frames[:, 1:].reshape(-1, c, h, w)
+            if (padded_h, padded_w) != (h, w):
+                padding = (0, padded_w - w, 0, padded_h - h)
+                gtlf_1 = F.pad(gtlf_1, padding, mode='replicate')
+                gtlf_2 = F.pad(gtlf_2, padding, mode='replicate')
 
             _, gt_flows_forward = self.fix_raft(gtlf_1, gtlf_2, iters=iters, test_mode=True)
             _, gt_flows_backward = self.fix_raft(gtlf_2, gtlf_1, iters=iters, test_mode=True)
 
-        
-        gt_flows_forward = gt_flows_forward.view(b, l_t-1, 2, h, w)
-        gt_flows_backward = gt_flows_backward.view(b, l_t-1, 2, h, w)
+        gt_flows_forward = gt_flows_forward[..., :h, :w].reshape(b, l_t - 1, 2, h, w)
+        gt_flows_backward = gt_flows_backward[..., :h, :w].reshape(b, l_t - 1, 2, h, w)
 
         return gt_flows_forward, gt_flows_backward
 
